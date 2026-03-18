@@ -1,86 +1,96 @@
-/* ── Pan-African palette ───────────────────────────────────────────────────
-   Red   #CC1122   Green  #007A3D   Gold   #FCD116   Dark bg  #0D1A0F
+/* ── Soil Profile Palette ───────────────────────────────────────────────────
+   Deep soil:   #0d0804   Dark brown:  #3d1f0a   Topsoil:    #6b3d1e
+   Ochre:       #c4895a   Clay red:    #a0522d   Sand:       #d4b483
+   Moss green:  #3d5a1e   Grass:       #4a7c2f   Sage:       #7a9e5a
+   Parchment:   #e8d5b0
    ──────────────────────────────────────────────────────────────────────── */
 
 /* ── Body & page backdrop ───────────────────────────────────────────────── */
 body {
-    background: linear-gradient(160deg, #0D1A0F 0%, #1A0A0C 50%, #1C1600 100%) !important;
+    background: linear-gradient(180deg, #0d1a08 0%, #140d05 55%, #0d0804 100%);
     min-height: 100vh;
 }
 
 /* ── Glassmorphism base ─────────────────────────────────────────────────── */
 .glass {
-    background: rgba(255, 255, 255, 0.07) !important;
+    background: rgba(61, 31, 10, 0.25) !important;
     backdrop-filter: blur(14px) saturate(140%) !important;
     -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35) !important;
+    border: 1px solid rgba(196, 137, 90, 0.20) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.40) !important;
 }
 
 /* ── Navbar glass ───────────────────────────────────────────────────────── */
 .navbar {
-    background: rgba(13, 26, 15, 0.72) !important;
+    background: rgba(13, 8, 4, 0.85) !important;
     backdrop-filter: blur(18px) saturate(150%) !important;
     -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
-    border-bottom: 1px solid rgba(252, 209, 22, 0.25) !important;
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.5) !important;
+    border-bottom: 1px solid rgba(196, 137, 90, 0.30) !important;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.60) !important;
 }
 
 /* ── Sidebar glass ──────────────────────────────────────────────────────── */
 .bslib-sidebar-layout > .sidebar {
-    background: rgba(125, 61, 0, 0.82) !important;
+    background: rgba(61, 31, 10, 0.78) !important;
     backdrop-filter: blur(16px) saturate(130%) !important;
     -webkit-backdrop-filter: blur(16px) saturate(130%) !important;
-    border-right: 1px solid rgba(252, 209, 22, 0.2) !important;
+    border-right: 1px solid rgba(196, 137, 90, 0.25) !important;
+}
+
+/* ── Map card ───────────────────────────────────────────────────────────── */
+.map-card {
+    background: rgba(55, 32, 12, 0.50) !important;
+    border: 1px solid rgba(196, 137, 90, 0.20) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.50) !important;
 }
 
 /* ── Info cards (title + description) ──────────────────────────────────── */
 .glass-card {
-    background: rgba(255, 255, 255, 0.06) !important;
+    background: rgba(61, 31, 10, 0.22) !important;
     backdrop-filter: blur(14px) saturate(130%) !important;
     -webkit-backdrop-filter: blur(14px) saturate(130%) !important;
-    border: 1px solid rgba(252, 209, 22, 0.18) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(196, 137, 90, 0.22) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
     border-radius: 0.6rem !important;
 }
 
 /* ── Description card accent border ────────────────────────────────────── */
 .glass-card-desc {
-    background: rgba(255, 255, 255, 0.06) !important;
+    background: rgba(61, 31, 10, 0.22) !important;
     backdrop-filter: blur(14px) saturate(130%) !important;
     -webkit-backdrop-filter: blur(14px) saturate(130%) !important;
     border-top: none !important;
     border-right: none !important;
     border-bottom: none !important;
-    border-left: 3px solid rgba(252, 209, 22, 0.7) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    border-left: 3px solid rgba(196, 137, 90, 0.75) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.30) !important;
     border-radius: 0.4rem !important;
 }
 
 /* ── Instructions card (right of map) ───────────────────────────────────── */
 .glass-card-instructions {
-    background: rgba(255, 255, 255, 0.06) !important;
+    background: rgba(61, 31, 10, 0.22) !important;
     backdrop-filter: blur(14px) saturate(130%) !important;
     -webkit-backdrop-filter: blur(14px) saturate(130%) !important;
     border-top: none !important;
     border-right: none !important;
     border-bottom: none !important;
-    border-left: 3px solid rgba(0, 122, 61, 0.75) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    border-left: 3px solid rgba(74, 124, 47, 0.80) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.30) !important;
     border-radius: 0.4rem !important;
 }
 
 .glass-card-instructions .card-header {
-    background: rgba(0, 100, 45, 0.45) !important;
-    border-bottom: 1px solid rgba(252, 209, 22, 0.2) !important;
-    color: #f0e8c0 !important;
+    background: rgba(61, 90, 30, 0.45) !important;
+    border-bottom: 1px solid rgba(196, 137, 90, 0.20) !important;
+    color: #e8d5b0 !important;
 }
 
 /* ── Card body text ─────────────────────────────────────────────────────── */
 .glass-card-desc .card-body p,
 .glass-card-instructions .card-body,
 .glass-card-instructions .card-body li {
-    color: #d8e8d4 !important;
+    color: #d4c9a8 !important;
 }
 
 /* ── Radio button labels ─────────────────────────────────────────────────── */
@@ -88,17 +98,16 @@ body {
 .sidebar .shiny-input-radiogroup label,
 .sidebar .radio label,
 .sidebar span {
-    color: #f0e8c0 !important;
+    color: #e8d5b0 !important;
 }
 
-/* ── Sidebar toggle hidden (we use our own hamburger in the navbar) ─────── */
 /* ── Sidebar toggle styling ─────────────────────────────────────────────── */
 .bslib-sidebar-toggle {
-    color: #000000 !important;
-    background: rgba(241, 237, 237, 1) !important;
+    color: #e8d5b0 !important;
+    background: rgba(61, 31, 10, 0.85) !important;
     border-radius: 0 0.5rem 0.5rem 0 !important;
     margin-top: 1rem !important;
-    height: 40px !important;
+    height: 60px !important;
 }
 
 /* ── Right info panel collapse ──────────────────────────────────────────── */
@@ -121,28 +130,34 @@ body {
     cursor: pointer !important;
 }
 
-/* ── La Jolla gradient for title text ───────────────────────────────────── */
+/* ── Soil-profile gradient for title text ───────────────────────────────── */
 .pan-african-title {
-    background: linear-gradient(135deg, #1B4888 0%, #1A8A8A 30%, #50A858 58%, #C8BC28 80%, #EEE4A0 100%);
+    font-family: "Futura", system-ui, -apple-system, BlinkMacSystemFont,
+               "Segoe UI", sans-serif;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    font-size: 1.8rem;
+    line-height: 1.2;
+
+    background: linear-gradient(90deg, #8b5a2b 0%, #c4895a 45%, #6b9e3e 100%);
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     background-clip: text;
-    letter-spacing: 0.1em;
-    display: block;
-    transform: scaleY(1.2);
-    transform-origin: center center;
-    font-weight: 1200px;
+    color: transparent;
+
+    text-align: center;
+    margin: 0;
 }
 
 /* ── About page ─────────────────────────────────────────────────────────── */
 .about-content {
-    color: #d8e8d4;
+    color: #d4c9a8;
 }
 
 .about-content h2, .about-content h4 {
-    color: #FCD116;
+    color: #c4895a;
 }
 
 .about-content hr {
-    border-color: rgba(252, 209, 22, 0.25);
+    border-color: rgba(196, 137, 90, 0.25);
 }

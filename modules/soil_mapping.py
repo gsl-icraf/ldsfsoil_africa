@@ -11,6 +11,25 @@ import numpy as np
 AFRICA_CENTER = (20.0, 2.0)
 AFRICA_ZOOM = 3
 
+# Topo + OSM hybrid using OpenTopoMap (renders OSM data with contours & hillshading)
+TOPO_STYLE = {
+    "version": 8,
+    "sources": {
+        "opentopomap": {
+            "type": "raster",
+            "tiles": [
+                "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+                "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
+                "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
+            ],
+            "tileSize": 256,
+            "attribution": "Map data: &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors, <a href='http://viewfinderpanoramas.org'>SRTM</a> | Map style: &copy; <a href='https://opentopomap.org'>OpenTopoMap</a> (CC-BY-SA)",
+            "maxzoom": 17,
+        }
+    },
+    "layers": [{"id": "topo", "type": "raster", "source": "opentopomap"}],
+}
+
 # Satellite style using ESRI World Imagery (free, no API key needed)
 SATELLITE_STYLE = {
     "version": 8,
@@ -28,6 +47,7 @@ SATELLITE_STYLE = {
 }
 
 BASEMAP_STYLES = {
+    "topo": TOPO_STYLE,
     "dark": Basemap.carto_url(Carto.DARK_MATTER),
     "streets": Basemap.carto_url(Carto.VOYAGER),
     "satellite": SATELLITE_STYLE,
@@ -140,14 +160,7 @@ _SIDEBAR_BG    = "rgba(0, 80, 30, 0.45)"   # glass green (also set via CSS)
 def ui():
     return sui.layout_sidebar(
         sui.sidebar(
-            sui.h6("Basemap", style="color: #f0e8c0; letter-spacing: 0.05em;"),
-            sui.input_radio_buttons(
-                "basemap",
-                None,
-                choices={"dark": "Dark", "streets": "Streets", "satellite": "Satellite"},
-                selected="dark",
-            ),
-            sui.h6("Soil Property", style="color: #f0e8c0; letter-spacing: 0.05em; margin-top: 1.5rem;"),
+            sui.h6("Soil Property", style="color: #f0e8c0; letter-spacing: 0.05em;"),
             sui.input_select(
                 "property",
                 None,
@@ -192,9 +205,25 @@ def ui():
             ),
             sui.div(
                 # Map fills remaining horizontal space
-                sui.div(
+                sui.card(
                     output_maplibregl("map", height="100%"),
-                    style="flex: 1 1 0; min-height: 0;",
+                    sui.card_footer(
+                        sui.div(
+                            sui.span("Basemap:", style="font-weight: bold; margin-right: 0.75rem;"),
+                            sui.input_radio_buttons(
+                                "basemap",
+                                None,
+                                choices={"topo": "Topo", "dark": "Dark", "streets": "Streets", "satellite": "Satellite"},
+                                selected="topo",
+                                inline=True,
+                            ),
+                            style="display: flex; align-items: top;"
+                        ),
+                        style="background: rgba(40,40,40,0.8); border-top: none; color: #f0e8c0; padding: 0.5rem 1rem;"
+                    ),
+                    class_="map-card",
+                    full_screen=True,
+                    style="flex: 1 1 0; min-height: 0; padding: 0; overflow: hidden; background: rgba(55, 32, 12, 0.50) !important;",
                 ),
                 # Instructions card docked to the right
                 sui.card(
@@ -331,7 +360,7 @@ def server(input, output, session):
     def map():
         m = Map(
             MapOptions(
-                style=BASEMAP_STYLES["dark"],
+                style=BASEMAP_STYLES["topo"],
                 center=AFRICA_CENTER,
                 zoom=AFRICA_ZOOM,
             )
