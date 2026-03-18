@@ -1,0 +1,148 @@
+/* ── Pan-African palette ───────────────────────────────────────────────────
+   Red   #CC1122   Green  #007A3D   Gold   #FCD116   Dark bg  #0D1A0F
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* ── Body & page backdrop ───────────────────────────────────────────────── */
+body {
+    background: linear-gradient(160deg, #0D1A0F 0%, #1A0A0C 50%, #1C1600 100%) !important;
+    min-height: 100vh;
+}
+
+/* ── Glassmorphism base ─────────────────────────────────────────────────── */
+.glass {
+    background: rgba(255, 255, 255, 0.07) !important;
+    backdrop-filter: blur(14px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* ── Navbar glass ───────────────────────────────────────────────────────── */
+.navbar {
+    background: rgba(13, 26, 15, 0.72) !important;
+    backdrop-filter: blur(18px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
+    border-bottom: 1px solid rgba(252, 209, 22, 0.25) !important;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ── Sidebar glass ──────────────────────────────────────────────────────── */
+.bslib-sidebar-layout > .sidebar {
+    background: rgba(125, 61, 0, 0.82) !important;
+    backdrop-filter: blur(16px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(130%) !important;
+    border-right: 1px solid rgba(252, 209, 22, 0.2) !important;
+}
+
+/* ── Info cards (title + description) ──────────────────────────────────── */
+.glass-card {
+    background: rgba(255, 255, 255, 0.06) !important;
+    backdrop-filter: blur(14px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(130%) !important;
+    border: 1px solid rgba(252, 209, 22, 0.18) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    border-radius: 0.6rem !important;
+}
+
+/* ── Description card accent border ────────────────────────────────────── */
+.glass-card-desc {
+    background: rgba(255, 255, 255, 0.06) !important;
+    backdrop-filter: blur(14px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(130%) !important;
+    border-top: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    border-left: 3px solid rgba(252, 209, 22, 0.7) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    border-radius: 0.4rem !important;
+}
+
+/* ── Instructions card (right of map) ───────────────────────────────────── */
+.glass-card-instructions {
+    background: rgba(255, 255, 255, 0.06) !important;
+    backdrop-filter: blur(14px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(130%) !important;
+    border-top: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    border-left: 3px solid rgba(0, 122, 61, 0.75) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    border-radius: 0.4rem !important;
+}
+
+.glass-card-instructions .card-header {
+    background: rgba(0, 100, 45, 0.45) !important;
+    border-bottom: 1px solid rgba(252, 209, 22, 0.2) !important;
+    color: #f0e8c0 !important;
+}
+
+/* ── Card body text ─────────────────────────────────────────────────────── */
+.glass-card-desc .card-body p,
+.glass-card-instructions .card-body,
+.glass-card-instructions .card-body li {
+    color: #d8e8d4 !important;
+}
+
+/* ── Radio button labels ─────────────────────────────────────────────────── */
+.sidebar label,
+.sidebar .shiny-input-radiogroup label,
+.sidebar .radio label,
+.sidebar span {
+    color: #f0e8c0 !important;
+}
+
+/* ── Sidebar toggle hidden (we use our own hamburger in the navbar) ─────── */
+/* ── Sidebar toggle styling ─────────────────────────────────────────────── */
+.bslib-sidebar-toggle {
+    color: #000000 !important;
+    background: rgba(241, 237, 237, 1) !important;
+    border-radius: 0 0.5rem 0.5rem 0 !important;
+    margin-top: 1rem !important;
+    height: 40px !important;
+}
+
+/* ── Right info panel collapse ──────────────────────────────────────────── */
+.glass-card-instructions.panel-collapsed {
+    width: 42px !important;
+    min-width: 42px !important;
+}
+
+.glass-card-instructions.panel-collapsed .card-body,
+.glass-card-instructions.panel-collapsed b {
+    display: none !important;
+}
+
+.glass-card-instructions.panel-collapsed .card-header {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 0.6rem 0 !important;
+    height: 100% !important;
+    cursor: pointer !important;
+}
+
+/* ── La Jolla gradient for title text ───────────────────────────────────── */
+.pan-african-title {
+    background: linear-gradient(135deg, #1B4888 0%, #1A8A8A 30%, #50A858 58%, #C8BC28 80%, #EEE4A0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.1em;
+    display: block;
+    transform: scaleY(1.2);
+    transform-origin: center center;
+    font-weight: 1200px;
+}
+
+/* ── About page ─────────────────────────────────────────────────────────── */
+.about-content {
+    color: #d8e8d4;
+}
+
+.about-content h2, .about-content h4 {
+    color: #FCD116;
+}
+
+.about-content hr {
+    border-color: rgba(252, 209, 22, 0.25);
+}
