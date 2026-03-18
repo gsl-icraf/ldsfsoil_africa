@@ -173,35 +173,16 @@ def ui():
             fillable=True,
         ),
         sui.div(
-            sui.layout_columns(
-                sui.card(
-                    sui.card_body(
-                        sui.h2(
-                            sui.HTML("Welcome to the LDSF Africa<br>Soil Mapping Dashboard!"),
-                            class_=_TITLE_CLASS,
-                        ),
-                        class_="d-flex align-items-center",
+            sui.card(
+                sui.card_body(
+                    sui.h2(
+                        sui.HTML("Welcome to the LDSF Africa<br>Soil Mapping Dashboard!"),
+                        class_=_TITLE_CLASS,
                     ),
-                    class_="glass-card",
-                    style="border: none !important; box-shadow: none !important; background: transparent !important;",
+                    class_="d-flex align-items-center justify-content-center",
                 ),
-                sui.card(
-                    sui.card_body(
-                        sui.p(
-                            "This dashboard presents soil property maps for the African continent "
-                            "derived from the Land Degradation Surveillance Framework (LDSF). "
-                            "The LDSF is a multi-scale sampling and monitoring framework developed "
-                            "by World Agroforestry (ICRAF) to assess and monitor the health of "
-                            "terrestrial ecosystems. Use the map to explore spatial patterns in "
-                            "soil properties including organic carbon, pH, texture, and nutrient "
-                            "availability at 250 m resolution.",
-                            class_="mb-0",
-                            style=f"color: {_CARD_TEXT}; font-size: 1.0rem; line-height: 1.6;",
-                        ),
-                    ),
-                    class_="glass-card-desc",
-                ),
-                col_widths=[5, 7],
+                class_="glass-card",
+                style="border: none !important; box-shadow: none !important; background: transparent !important;",
             ),
             sui.div(
                 # Map fills remaining horizontal space
@@ -209,15 +190,31 @@ def ui():
                     output_maplibregl("map", height="100%"),
                     sui.card_footer(
                         sui.div(
-                            sui.span("Basemap:", style="font-weight: bold; margin-right: 0.75rem;"),
-                            sui.input_radio_buttons(
-                                "basemap",
-                                None,
-                                choices={"topo": "Topo", "dark": "Dark", "streets": "Streets", "satellite": "Satellite"},
-                                selected="topo",
-                                inline=True,
+                            sui.div(
+                                sui.span("Basemap:", style="font-weight: bold; margin-right: 0.75rem;"),
+                                sui.input_radio_buttons(
+                                    "basemap",
+                                    None,
+                                    choices={"topo": "Topo", "dark": "Dark", "streets": "Streets", "satellite": "Satellite"},
+                                    selected="topo",
+                                    inline=True,
+                                ),
+                                style="display: flex; align-items: center;",
                             ),
-                            style="display: flex; align-items: top;"
+                            sui.input_action_button(
+                                "reset_view",
+                                "⟳ Reset view",
+                                style=(
+                                    "background: rgba(196,137,90,0.18);"
+                                    " border: 1px solid rgba(196,137,90,0.45);"
+                                    " color: #e8d5b0;"
+                                    " border-radius: 0.4rem;"
+                                    " padding: 0.2rem 0.75rem;"
+                                    " font-size: 0.85rem;"
+                                    " cursor: pointer;"
+                                ),
+                            ),
+                            style="display: flex; justify-content: space-between; align-items: center; width: 100%;",
                         ),
                         style="background: rgba(40,40,40,0.8); border-top: none; color: #f0e8c0; padding: 0.5rem 1rem;"
                     ),
@@ -230,7 +227,7 @@ def ui():
                     sui.card_header(
                         sui.tags.div(
                             sui.tags.span(
-                                sui.tags.b("How to use this dashboard"),
+                                sui.tags.b("About this dashboard"),
                                 id="right_panel_title",
                             ),
                             sui.tags.button(
@@ -253,6 +250,21 @@ def ui():
                         ),
                     ),
                     sui.card_body(
+                        sui.p(
+                            "This dashboard presents soil property maps for the African continent "
+                            "derived from the Land Degradation Surveillance Framework (LDSF). "
+                            "The LDSF is a multi-scale sampling and monitoring framework developed "
+                            "by World Agroforestry (ICRAF) to assess and monitor the health of "
+                            "terrestrial ecosystems. Use the map to explore spatial patterns in "
+                            "soil properties including organic carbon, pH, texture, and nutrient "
+                            "availability at 250 m resolution.",
+                            style=f"color: {_CARD_TEXT}; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem;",
+                        ),
+                        sui.hr(style="border-color: rgba(196,137,90,0.25); margin: 0 0 1rem 0;"),
+                        sui.h6(
+                            "How to use this dashboard",
+                            style=f"color: {_CARD_TEXT}; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.5rem;",
+                        ),
                         sui.tags.ul(
                             sui.tags.li(
                                 sui.tags.b("Pan: "),
@@ -393,3 +405,11 @@ def server(input, output, session):
             for key in SOIL_LAYERS:
                 vis = "visible" if key == prop else "none"
                 mc.set_layout_property(f"soil-{key}", "visibility", vis)
+
+    @reactive.effect
+    @reactive.event(input.reset_view)
+    async def _reset_view():
+        sui.update_radio_buttons("basemap", selected="topo")
+        sui.update_radio_buttons("property", selected="none")
+        async with MapContext("map") as mc:
+            mc.add_call("flyTo", {"center": list(AFRICA_CENTER), "zoom": AFRICA_ZOOM})

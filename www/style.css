@@ -67,6 +67,12 @@ body {
     border-radius: 0.4rem !important;
 }
 
+/* ── Description card header ────────────────────────────────────────────── */
+.glass-card-desc .card-header {
+    background: rgba(61, 31, 10, 0.35) !important;
+    border-bottom: 1px solid rgba(196, 137, 90, 0.20) !important;
+}
+
 /* ── Instructions card (right of map) ───────────────────────────────────── */
 .glass-card-instructions {
     background: rgba(61, 31, 10, 0.22) !important;
@@ -137,7 +143,7 @@ body {
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.25em;
-    font-size: 1.8rem;
+    font-size: 2.5rem;
     line-height: 1.2;
 
     background: linear-gradient(90deg, #8b5a2b 0%, #c4895a 45%, #6b9e3e 100%);
@@ -146,7 +152,8 @@ body {
     color: transparent;
 
     text-align: center;
-    margin: 0;
+    margin: 5px;
+    padding-top: 1px;
 }
 
 /* ── About page ─────────────────────────────────────────────────────────── */
