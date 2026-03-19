@@ -1,152 +1,72 @@
 from shiny import module, render, reactive
 from shiny import ui as sui
-from maplibre import Map, MapOptions, MapContext, Layer, LayerType, output_maplibregl, render_maplibregl
-from maplibre.sources import RasterTileSource
-from maplibre.basemaps import Basemap, Carto
-import urllib.parse
-import json
-import numpy as np
+from maplibre import Map, MapOptions, MapContext, output_maplibregl, render_maplibregl
+from load_data import SOIL_LAYERS
 
 # Africa center (lng, lat) and zoom
 AFRICA_CENTER = (20.0, 2.0)
-AFRICA_ZOOM = 3
+AFRICA_ZOOM   = 3
 
-# Topo + OSM hybrid using OpenTopoMap (renders OSM data with contours & hillshading)
-TOPO_STYLE = {
-    "version": 8,
-    "sources": {
-        "opentopomap": {
-            "type": "raster",
-            "tiles": [
-                "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
-                "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
-                "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
-            ],
-            "tileSize": 256,
-            "attribution": "Map data: &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors, <a href='http://viewfinderpanoramas.org'>SRTM</a> | Map style: &copy; <a href='https://opentopomap.org'>OpenTopoMap</a> (CC-BY-SA)",
-            "maxzoom": 17,
+# Convenience dict: key → pre-computed tile URL
+_SOIL_TILE_URLS = {key: info["tiles_url"] for key, info in SOIL_LAYERS.items()}
+
+# All basemaps as raster tile sources — no setStyle() needed, just toggle visibility
+BASEMAP_TILES = {
+    "topo": {
+        "tiles": [
+            "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+            "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
+            "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
+        ],
+        "attribution": "Map data: &copy; OpenStreetMap contributors, SRTM | Style: &copy; OpenTopoMap (CC-BY-SA)",
+        "maxzoom": 17,
+    },
+    "dark": {
+        "tiles": [
+            "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+            "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+            "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+        ],
+        "attribution": "&copy; OpenStreetMap contributors &copy; CARTO",
+    },
+    "streets": {
+        "tiles": [
+            "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+            "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+            "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+        ],
+        "attribution": "&copy; OpenStreetMap contributors &copy; CARTO",
+    },
+    "satellite": {
+        "tiles": [
+            "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+        ],
+        "attribution": "Tiles &copy; Esri",
+    },
+}
+
+def build_map_style(active_basemap="topo", active_soil="none"):
+    """Build a complete MapLibre style with all basemaps + soil layers.
+    Basemap and soil visibility are toggled via set_layout_property — no setStyle needed."""
+    sources, layers = {}, []
+    for key, info in BASEMAP_TILES.items():
+        sources[f"basemap-{key}"] = {
+            "type": "raster", "tiles": info["tiles"], "tileSize": 256,
+            "attribution": info.get("attribution", ""),
+            **({} if "maxzoom" not in info else {"maxzoom": info["maxzoom"]}),
         }
-    },
-    "layers": [{"id": "topo", "type": "raster", "source": "opentopomap"}],
-}
-
-# Satellite style using ESRI World Imagery (free, no API key needed)
-SATELLITE_STYLE = {
-    "version": 8,
-    "sources": {
-        "esri-satellite": {
-            "type": "raster",
-            "tiles": [
-                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-            ],
-            "tileSize": 256,
-            "attribution": "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
-        }
-    },
-    "layers": [{"id": "satellite", "type": "raster", "source": "esri-satellite"}],
-}
-
-BASEMAP_STYLES = {
-    "topo": TOPO_STYLE,
-    "dark": Basemap.carto_url(Carto.DARK_MATTER),
-    "streets": Basemap.carto_url(Carto.VOYAGER),
-    "satellite": SATELLITE_STYLE,
-}
-
-TITILER_ENDPOINT = "https://titiler.thegrit.earth/cog/tiles/WebMercatorQuad/{z}/{x}/{y}.png"
-
-# Soil Layer Definitions
-SOIL_LAYERS = {
-    "soc": {
-        "title": "Soil Organic Carbon",
-        "url": "https://stacapi100.thegrit.earth/eodata/cogeo/africa_soil_maps_250m/Africa_predsoc_2024-2025_250m.tif",
-        "bins": [0, 2.5, 12, 21.5, 31, 40.5, 100],
-        "colors": ["#FFFECB", "#F2C95D", "#E69352", "#D85F4D", "#8E3F3D", "#442817", "#191900"],
-    },
-    "ph": {
-        "title": "pH",
-        "url": "https://stacapi100.thegrit.earth/eodata/cogeo/africa_soil_maps_250m/Africa_predpH_2024-2025_250m.tif",
-        "bins": [4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
-        "colors": ["#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641", "#0571b0"],
-    },
-    "clay": {
-        "title": "Clay",
-        "url": "https://stacapi100.thegrit.earth/eodata/cogeo/africa_soil_maps_250m/Africa_predclay_2024-2025_250m.tif",
-        "bins": [0, 15, 30, 45, 60, 100],
-        "colors": ["#f7fcfd", "#e0ecf4", "#bfd3e6", "#9ebcda", "#8c96c6", "#8c6bb1"],
-    },
-    "sand": {
-        "title": "Sand",
-        "url": "https://stacapi100.thegrit.earth/eodata/cogeo/africa_soil_maps_250m/Africa_predsand_2024-2025_250m.tif",
-        "bins": [0, 20, 40, 60, 80, 100],
-        "colors": ["#ffffd4", "#fee391", "#fec44f", "#fe9929", "#d95f0e", "#993404"],
-    },
-    "tn": {
-        "title": "Total Nitrogen",
-        "url": "https://stacapi100.thegrit.earth/eodata/cogeo/africa_soil_maps_250m/Africa_predtn_2024-2025_250m.tif",
-        "bins": [0, 5, 10, 20, 30, 50],
-        "colors": ["#f7fcf0", "#e0f3db", "#ccebc5", "#a8ddb5", "#7bccc4", "#4eb3d3"],
-    },
-    "cec": {
-        "title": "CEC",
-        "url": "https://stacapi100.thegrit.earth/eodata/cogeo/africa_soil_maps_250m/Africa_predcec_2024-2025_250m.tif",
-        "bins": [0, 50, 100, 200, 300, 500],
-        "colors": ["#fff7bc", "#fee391", "#fec44f", "#fe9929", "#ec7014", "#cc4c02"],
-    },
-    "exca": {
-        "title": "Exchangeable Calcium",
-        "url": "https://stacapi100.thegrit.earth/eodata/cogeo/africa_soil_maps_250m/Africa_predexca_2024-2025_250m.tif",
-        "bins": [0, 20, 50, 100, 200, 400],
-        "colors": ["#f7f4f9", "#e7e1ef", "#d4b9da", "#c994c7", "#df65b0", "#980043"],
-    },
-    "exmg": {
-        "title": "Exchangeable Magnesium",
-        "url": "https://stacapi100.thegrit.earth/eodata/cogeo/africa_soil_maps_250m/Africa_predexmg_2024-2025_250m.tif",
-        "bins": [0, 10, 25, 50, 100, 200],
-        "colors": ["#f0f9e8", "#ccebc5", "#a8ddb5", "#7bccc4", "#43a2ca", "#0868ac"],
-    },
-}
-
-def build_tile_url(cog_url, bins, colors, n_bins=100, nodata=-9999):
-    """Build a TiTiler tile URL with an interval colormap."""
-    bin_arr = np.array(bins, dtype=float)
-    linear_values = np.linspace(bin_arr[0], bin_arr[-1], n_bins)
-    
-    def hex_to_rgb(hex_color):
-        h = hex_color.lstrip("#")
-        return [int(h[i:i+2], 16) for i in (0, 2, 4)]
-
-    rgb_colors = [hex_to_rgb(c) for c in colors]
-    norm_bins = (bin_arr - bin_arr[0]) / (bin_arr[-1] - bin_arr[0])
-    norm_linear = (linear_values - bin_arr[0]) / (bin_arr[-1] - bin_arr[0])
-
-    def interpolate_color(t):
-        for j in range(len(norm_bins) - 1):
-            if norm_bins[j] <= t <= norm_bins[j + 1]:
-                denom = norm_bins[j + 1] - norm_bins[j]
-                seg_t = (t - norm_bins[j]) / denom if denom else 0
-                return [
-                    int(rgb_colors[j][k] + seg_t * (rgb_colors[j + 1][k] - rgb_colors[j][k]))
-                    for k in range(3)
-                ] + [255]
-        return rgb_colors[-1] + [255]
-
-    gradient = [interpolate_color(t) for t in norm_linear]
-    # Prepend a fully transparent interval to mask nodata (-9999) and zero
-    colormap = [
-        [[-10000.0, float(linear_values[0])], [0, 0, 0, 0]],
-    ] + [
-        [[float(linear_values[i]), float(linear_values[i + 1])], gradient[i]]
-        for i in range(n_bins - 1)
-    ]
-
-    encoded_cog = urllib.parse.quote(cog_url, safe="")
-    encoded_colormap = urllib.parse.quote(json.dumps(colormap), safe="")
-    return (
-        f"{TITILER_ENDPOINT}?url={encoded_cog}"
-        f"&colormap={encoded_colormap}"
-        f"&return_mask=true"
-    )
+        layers.append({
+            "id": f"basemap-{key}", "type": "raster", "source": f"basemap-{key}",
+            "layout": {"visibility": "visible" if key == active_basemap else "none"},
+        })
+    for key, tile_url in _SOIL_TILE_URLS.items():
+        sources[f"soil-{key}"] = {"type": "raster", "tiles": [tile_url], "tileSize": 256}
+        layers.append({
+            "id": f"soil-{key}", "type": "raster", "source": f"soil-{key}",
+            "paint": {"raster-opacity": 0.8},
+            "layout": {"visibility": "visible" if key == active_soil else "none"},
+        })
+    return {"version": 8, "sources": sources, "layers": layers}
 
 
 # Pan-African palette
@@ -325,6 +245,9 @@ def server(input, output, session):
         info = SOIL_LAYERS[prop]
         colors = info["colors"]
         bins = info["bins"]
+        cap = info.get("cap", False)
+        cap_low = info.get("cap_low", False)
+        unit = info.get("unit", "")
 
         # Gradient bar: top = high value, bottom = low value
         stops = ", ".join(reversed(colors))
@@ -336,9 +259,15 @@ def server(input, output, session):
         label_divs = []
         for i, val in enumerate(reversed(bins)):
             pct = i / (n - 1) * 100
+            if cap and i == 0:
+                label = f"\u2265{val}"
+            elif cap_low and i == n - 1:
+                label = f"\u2264{val}"
+            else:
+                label = str(val)
             label_divs.append(
                 sui.div(
-                    str(val),
+                    label,
                     style=(
                         f"position: absolute; top: {pct}%; transform: translateY(-50%);"
                         " font-size: 0.75rem; color: #1a1a1a; white-space: nowrap;"
@@ -348,6 +277,16 @@ def server(input, output, session):
 
         return sui.div(
             sui.div(
+                # Unit label — rotated vertically, left of the bar
+                sui.div(
+                    unit,
+                    style=(
+                        f"writing-mode: vertical-rl; transform: rotate(180deg);"
+                        " font-size: 0.85rem; color: #1a1a1a; white-space: nowrap;"
+                        f" height: {bar_h}px; display: flex; align-items: center;"
+                        " justify-content: center; padding-right: 12px; flex-shrink: 0;"
+                    ),
+                ),
                 sui.div(
                     style=(
                         f"background: {gradient}; width: 28px; height: {bar_h}px;"
@@ -370,46 +309,43 @@ def server(input, output, session):
 
     @render_maplibregl
     def map():
-        m = Map(
-            MapOptions(
-                style=BASEMAP_STYLES["topo"],
-                center=AFRICA_CENTER,
-                zoom=AFRICA_ZOOM,
-            )
-        )
-        for key, info in SOIL_LAYERS.items():
-            tile_url = build_tile_url(info["url"], info["bins"], info["colors"])
-            m.add_layer(
-                Layer(
-                    id=f"soil-{key}",
-                    type=LayerType.RASTER,
-                    source=RasterTileSource(tiles=[tile_url], tile_size=256),
-                    paint={"raster-opacity": 0.8},
-                    layout={"visibility": "none"},
-                )
-            )
-        return m
+        return Map(MapOptions(
+            style=build_map_style("topo", "none"),
+            center=AFRICA_CENTER,
+            zoom=AFRICA_ZOOM,
+        ))
 
     @reactive.effect
     @reactive.event(input.basemap)
     async def _update_basemap():
-        style = BASEMAP_STYLES[input.basemap()]
-        async with MapContext("map") as mc:
-            mc.add_call("setStyle", style)
+        new_basemap = input.basemap()
+        try:
+            async with MapContext("map") as mc:
+                for key in BASEMAP_TILES:
+                    vis = "visible" if key == new_basemap else "none"
+                    mc.set_layout_property(f"basemap-{key}", "visibility", vis)
+        except Exception as e:
+            print(f"[basemap] {e}")
 
     @reactive.effect
     @reactive.event(input.property)
     async def _update_property():
         prop = input.property()
-        async with MapContext("map") as mc:
-            for key in SOIL_LAYERS:
-                vis = "visible" if key == prop else "none"
-                mc.set_layout_property(f"soil-{key}", "visibility", vis)
+        try:
+            async with MapContext("map") as mc:
+                for key in SOIL_LAYERS:
+                    vis = "visible" if key == prop else "none"
+                    mc.set_layout_property(f"soil-{key}", "visibility", vis)
+        except Exception as e:
+            print(f"[property] {e}")
 
     @reactive.effect
     @reactive.event(input.reset_view)
     async def _reset_view():
         sui.update_radio_buttons("basemap", selected="topo")
-        sui.update_radio_buttons("property", selected="none")
-        async with MapContext("map") as mc:
-            mc.add_call("flyTo", {"center": list(AFRICA_CENTER), "zoom": AFRICA_ZOOM})
+        sui.update_select("property", selected="none")
+        try:
+            async with MapContext("map") as mc:
+                mc.add_call("flyTo", {"center": list(AFRICA_CENTER), "zoom": AFRICA_ZOOM})
+        except Exception as e:
+            print(f"[reset] {e}")

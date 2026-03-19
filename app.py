@@ -7,7 +7,7 @@ from modules import soil_mapping, about
 # Maps URL ?page= value ↔ nav panel title
 PAGE_TO_NAV = {
     "soil_mapping": "LDSF Soil Mapping",
-    "about": "About",
+    "about": "About this dashboard",
 }
 NAV_TO_PAGE = {v: k for k, v in PAGE_TO_NAV.items()}
 
@@ -27,7 +27,7 @@ $(document).on('shiny:inputchanged', function(e) {
 
 app_ui = ui.page_navbar(
     ui.nav_panel("LDSF Soil Mapping", soil_mapping.ui("soil_mapping")),
-    ui.nav_panel("About", about.ui("about")),
+    ui.nav_panel("About this dashboard", about.ui("about")),
     id="nav",
     title=ui.tags.span(ui.HTML("🌍&nbsp;"), "Africa Soil Maps"),
     fillable="LDSF Soil Mapping",
