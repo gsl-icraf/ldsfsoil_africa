@@ -1,4 +1,5 @@
 import math
+import urllib.parse
 
 import httpx
 import matplotlib
@@ -9,6 +10,7 @@ from shiny import module, render, reactive
 from shiny import ui as sui
 from maplibre import Map, MapOptions, MapContext, output_maplibregl, render_maplibregl
 from load_data import SOIL_LAYERS
+from utils import T
 
 # Africa center (lng, lat) and zoom
 AFRICA_CENTER = (20.0, 2.0)
@@ -251,19 +253,24 @@ _CARD_TEXT     = "#d8e8d4"
 _ACCENT        = "#FCD116"
 _SIDEBAR_BG    = "rgba(0, 80, 30, 0.45)"
 
-_MARKER_JS = sui.tags.script("""
-Shiny.addCustomMessageHandler('marker_mode_change', function(active) {
+def _make_marker_js(lang="en"):
+    on_text  = T(lang, "soil_mapping", "marker_on").replace("'", "\\'")
+    off_text = T(lang, "soil_mapping", "marker_off").replace("'", "\\'")
+    return sui.tags.script(f"""
+var _MARKER_ON_TEXT  = '{on_text}';
+var _MARKER_OFF_TEXT = '{off_text}';
+Shiny.addCustomMessageHandler('marker_mode_change', function(active) {{
     var canvases = document.querySelectorAll('.maplibregl-canvas');
-    canvases.forEach(function(c) {
+    canvases.forEach(function(c) {{
         c.style.cursor = active ? 'crosshair' : '';
-    });
+    }});
     var btn = document.getElementById('marker_toggle_btn');
-    if (btn) {
-        btn.textContent = active ? '📍 Marker mode: ON' : '📍 Marker mode: OFF';
+    if (btn) {{
+        btn.textContent = active ? _MARKER_ON_TEXT : _MARKER_OFF_TEXT;
         btn.style.borderColor = active ? 'rgba(252,209,22,0.7)' : 'rgba(196,137,90,0.45)';
         btn.style.color = active ? '#FCD116' : '#e8d5b0';
-    }
-});
+    }}
+}});
 """)
 
 _MARKER_BTN_STYLE = (
@@ -280,20 +287,34 @@ _MARKER_BTN_STYLE = (
 
 
 @module.ui
-def ui():
+def ui(lang="en"):
+    t = lambda *keys: T(lang, "soil_mapping", *keys)
+
+    collapse_text = t("right_panel_collapse").replace("'", "\\'")
+    expand_text   = t("right_panel_expand").replace("'", "\\'")
+    panel_js = sui.tags.script(f"""
+function toggleRightPanel(btn) {{
+    var card = btn.closest('.glass-card-instructions');
+    if (!card) return;
+    var collapsed = card.classList.toggle('panel-collapsed');
+    btn.innerHTML = collapsed ? '&#8249;' : '&#8250;';
+    btn.title = collapsed ? '{expand_text}' : '{collapse_text}';
+}}
+""")
+
     return sui.layout_sidebar(
         sui.sidebar(
-            sui.h6("Soil Property", style="color: #f0e8c0; letter-spacing: 0.05em;"),
+            sui.h6(t("sidebar_title"), style="color: #f0e8c0; letter-spacing: 0.05em;"),
             sui.input_select(
                 "property",
                 None,
-                choices={"none": "None"} | {k: v["title"] for k, v in SOIL_LAYERS.items()},
+                choices={"none": t("none")} | {k: v["title"] for k, v in SOIL_LAYERS.items()},
                 selected="none",
             ),
             sui.output_ui("marker_btn_ui"),
             sui.output_ui("legend"),
             sui.output_ui("density_section"),
-            _MARKER_JS,
+            _make_marker_js(lang),
             width=280,
             open="desktop",
             fillable=True,
@@ -303,18 +324,18 @@ def ui():
                 sui.card_body(
                     sui.div(
                         sui.h2(
-                            sui.HTML("Welcome to the LDSF Africa<br>Soil Mapping Dashboard!"),
+                            sui.HTML(t("welcome_title")),
                             class_=_TITLE_CLASS,
                         ),
                         sui.div(
                             sui.span(
-                                "Select country:",
+                                t("select_country"),
                                 style="color: #f0e8c0; font-size: 0.8rem; margin-bottom: 0.2rem; display: block;",
                             ),
                             sui.input_select(
                                 "country_zoom",
                                 None,
-                                choices={"none": "— Select —"} | {k: k for k in sorted(AFRICA_COUNTRIES)},
+                                choices={"none": t("select")} | {k: k for k in sorted(AFRICA_COUNTRIES)},
                                 selected="none",
                                 width="200px",
                             ),
@@ -333,28 +354,37 @@ def ui():
                     sui.card_footer(
                         sui.div(
                             sui.div(
-                                sui.span("Basemap:", style="font-weight: bold; margin-right: 0.75rem;"),
+                                sui.span(t("basemap"), style="font-weight: bold; margin-right: 0.75rem;"),
                                 sui.input_radio_buttons(
                                     "basemap",
                                     None,
-                                    choices={"topo": "Topo", "dark": "Dark", "streets": "Streets", "satellite": "Satellite"},
+                                    choices={
+                                        "topo":      t("basemap_topo"),
+                                        "dark":      t("basemap_dark"),
+                                        "streets":   t("basemap_streets"),
+                                        "satellite": t("basemap_satellite"),
+                                    },
                                     selected="topo",
                                     inline=True,
                                 ),
                                 style="display: flex; align-items: center;",
                             ),
-                            sui.input_action_button(
-                                "reset_view",
-                                "⟳ Reset view",
-                                style=(
-                                    "background: rgba(196,137,90,0.18);"
-                                    " border: 1px solid rgba(196,137,90,0.45);"
-                                    " color: #e8d5b0;"
-                                    " border-radius: 0.4rem;"
-                                    " padding: 0.2rem 0.75rem;"
-                                    " font-size: 0.85rem;"
-                                    " cursor: pointer;"
+                            sui.div(
+                                sui.output_ui("layer_toggle_ui"),
+                                sui.input_action_button(
+                                    "reset_view",
+                                    t("reset_view"),
+                                    style=(
+                                        "background: rgba(196,137,90,0.18);"
+                                        " border: 1px solid rgba(196,137,90,0.45);"
+                                        " color: #e8d5b0;"
+                                        " border-radius: 0.4rem;"
+                                        " padding: 0.2rem 0.75rem;"
+                                        " font-size: 0.85rem;"
+                                        " cursor: pointer;"
+                                    ),
                                 ),
+                                style="display: flex; gap: 0.5rem; align-items: center;",
                             ),
                             style="display: flex; justify-content: space-between; align-items: center; width: 100%;",
                         ),
@@ -367,12 +397,12 @@ def ui():
                 sui.card(
                     sui.card_header(
                         sui.tags.div(
-                            sui.tags.span(sui.tags.b("About this dashboard"), id="right_panel_title"),
+                            sui.tags.span(sui.tags.b(t("right_panel_title")), id="right_panel_title"),
                             sui.tags.button(
                                 sui.HTML("&#8250;"),
                                 id="right_panel_btn",
                                 onclick="toggleRightPanel(this)",
-                                title="Collapse panel",
+                                title=t("right_panel_collapse"),
                                 style=(
                                     "background: transparent; border: none; color: #f0e8c0;"
                                     " font-size: 1.4rem; line-height: 1; cursor: pointer;"
@@ -384,26 +414,20 @@ def ui():
                     ),
                     sui.card_body(
                         sui.p(
-                            "This dashboard presents soil property maps for the African continent "
-                            "derived from the Land Degradation Surveillance Framework (LDSF). "
-                            "The LDSF is a multi-scale sampling and monitoring framework developed "
-                            "by World Agroforestry (ICRAF) to assess and monitor the health of "
-                            "terrestrial ecosystems. Use the map to explore spatial patterns in "
-                            "soil properties including organic carbon, pH, texture, and nutrient "
-                            "availability at 250 m resolution.",
+                            t("right_panel_desc"),
                             style=f"color: {_CARD_TEXT}; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem;",
                         ),
                         sui.hr(style="border-color: rgba(196,137,90,0.25); margin: 0 0 1rem 0;"),
                         sui.h6(
-                            "How to use this dashboard",
+                            t("how_to_title"),
                             style=f"color: {_CARD_TEXT}; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.5rem;",
                         ),
                         sui.tags.ul(
-                            sui.tags.li(sui.tags.b("Pan: "), "Click and drag to move the map."),
-                            sui.tags.li(sui.tags.b("Zoom: "), "Scroll wheel, pinch, or use the +/− buttons."),
-                            sui.tags.li(sui.tags.b("Basemap: "), "Switch between Dark, Streets and Satellite using the controls on the left."),
-                            sui.tags.li(sui.tags.b("Layers: "), "Soil property layers will appear here as they are added to the dashboard."),
-                            sui.tags.li(sui.tags.b("Click on map: "), "Click on the map to see the distribution of values for the selected soil property within a 2 km² area around the click."),
+                            sui.tags.li(sui.tags.b(t("how_pan_b")),     t("how_pan")),
+                            sui.tags.li(sui.tags.b(t("how_zoom_b")),    t("how_zoom")),
+                            sui.tags.li(sui.tags.b(t("how_basemap_b")), t("how_basemap")),
+                            sui.tags.li(sui.tags.b(t("how_layers_b")),  t("how_layers")),
+                            sui.tags.li(sui.tags.b(t("how_click_b")),   t("how_click")),
                             class_="ps-3",
                             style="font-size: 1rem; line-height: 1.7;",
                         ),
@@ -414,15 +438,7 @@ def ui():
                     class_="glass-card-instructions",
                     style="width: 450px; flex-shrink: 0; overflow: hidden; transition: width 0.3s ease;",
                 ),
-                sui.tags.script("""
-function toggleRightPanel(btn) {
-    var card = btn.closest('.glass-card-instructions');
-    if (!card) return;
-    var collapsed = card.classList.toggle('panel-collapsed');
-    btn.innerHTML = collapsed ? '&#8249;' : '&#8250;';
-    btn.title = collapsed ? 'Expand panel' : 'Collapse panel';
-}
-"""),
+                panel_js,
                 style="display: flex; flex-direction: row; flex: 1 1 0; min-height: 0; gap: 0.75rem;",
             ),
             style="display: flex; flex-direction: column; height: 100%; gap: 0.75rem;",
@@ -435,25 +451,75 @@ function toggleRightPanel(btn) {
 @module.server
 def server(input, output, session):
 
-    _marker_active = reactive.value(False)
-    _last_click    = reactive.value(None)
+    _marker_active  = reactive.value(False)
+    _last_click     = reactive.value(None)
+    _layer_visible  = reactive.value(True)
+
+    @reactive.calc
+    def _lang():
+        try:
+            qs = session.input[".clientdata_url_search"]()
+            params = urllib.parse.parse_qs(qs.lstrip("?"))
+            return params.get("lang", ["en"])[0]
+        except Exception:
+            return "en"
 
     # ── Marker mode button (hidden when no property selected) ─────────────────
     @render.ui
     def marker_btn_ui():
         if input.property() == "none":
             return sui.div()
+        lang = _lang()
         return sui.tags.button(
-            "📍 Marker mode: OFF",
+            T(lang, "soil_mapping", "marker_off"),
             id="marker_toggle_btn",
             onclick="Shiny.setInputValue('soil_mapping-marker_toggle', Math.random());",
             style=_MARKER_BTN_STYLE,
         )
 
+    # ── Layer visibility toggle button ────────────────────────────────────────
+    @render.ui
+    def layer_toggle_ui():
+        if input.property() == "none":
+            return sui.div()
+        lang    = _lang()
+        visible = _layer_visible.get()
+        label   = T(lang, "soil_mapping", "layer_on" if visible else "layer_off")
+        return sui.tags.button(
+            label,
+            id="layer_toggle_btn",
+            onclick="Shiny.setInputValue('soil_mapping-layer_toggle', Math.random());",
+            style=(
+                "background: rgba(196,137,90,0.18);"
+                " border: 1px solid rgba(196,137,90,0.45);"
+                " color: #e8d5b0;"
+                " border-radius: 0.4rem;"
+                " padding: 0.2rem 0.75rem;"
+                " font-size: 0.85rem;"
+                " cursor: pointer;"
+            ),
+        )
+
+    @reactive.effect
+    @reactive.event(input.layer_toggle)
+    async def _toggle_layer():
+        prop = input.property()
+        if prop == "none":
+            return
+        new_vis = not _layer_visible.get()
+        _layer_visible.set(new_vis)
+        vis_str = "visible" if new_vis else "none"
+        try:
+            async with MapContext("map") as mc:
+                mc.set_layout_property(f"soil-{prop}", "visibility", vis_str)
+        except Exception as e:
+            print(f"[layer_toggle] {e}")
+
     # ── Clear click + circle when property changes ────────────────────────────
     @reactive.effect
     @reactive.event(input.property)
     async def _on_property_change():
+        _layer_visible.set(True)
         if _last_click.get() is not None:
             _last_click.set(None)
             await _hide_circle()
@@ -558,11 +624,12 @@ def server(input, output, session):
     def density_section():
         if not _marker_active.get():
             return sui.div()
+        lang = _lang()
         click = _last_click.get()
         if click is None:
             return sui.div(
                 sui.p(
-                    "Click on the map to sample values within a 2 km radius.",
+                    T(lang, "soil_mapping", "click_hint"),
                     style="color: #d8e8d4; font-size: 0.8rem; margin-top: 0.75rem; font-style: italic;",
                 )
             )
@@ -570,15 +637,16 @@ def server(input, output, session):
         if prop == "none":
             return sui.div(
                 sui.p(
-                    "Select a soil property to see the distribution.",
+                    T(lang, "soil_mapping", "select_hint"),
                     style="color: #d8e8d4; font-size: 0.8rem; margin-top: 0.75rem; font-style: italic;",
                 )
             )
         coords = click["coords"]
+        radius_label = T(lang, "soil_mapping", "radius_label")
         return sui.div(
             sui.hr(style="border-color: rgba(196,137,90,0.2); margin: 0.75rem 0 0.5rem 0;"),
             sui.p(
-                f"📍 {coords['lat']:.4f}°, {coords['lng']:.4f}°  |  2 km radius",
+                f"📍 {coords['lat']:.4f}°, {coords['lng']:.4f}°  |  {radius_label}",
                 style="color: #d8e8d4; font-size: 0.78rem; margin: 0 0 0.4rem 0;",
             ),
             sui.output_plot("density_plot", height="180px"),
@@ -589,6 +657,11 @@ def server(input, output, session):
     async def density_plot():
         click = _last_click.get()
         prop  = input.property()
+        lang  = _lang()
+        no_data_label = T(lang, "soil_mapping", "no_data")
+        pixels_label  = T(lang, "soil_mapping", "pixels")
+        mean_label    = T(lang, "soil_mapping", "mean")
+
         if click is None or prop == "none":
             fig = plt.figure(figsize=(2.6, 1.8))
             fig.patch.set_alpha(0)
@@ -624,7 +697,7 @@ def server(input, output, session):
         except Exception as e:
             print(f"[density_plot] {e}")
             fig, ax = plt.subplots(figsize=(2.6, 1.8))
-            ax.text(0.5, 0.5, "No data", ha="center", va="center",
+            ax.text(0.5, 0.5, no_data_label, ha="center", va="center",
                     transform=ax.transAxes, color="#888", fontsize=9)
             ax.set_axis_off()
             fig.patch.set_facecolor("white")
@@ -634,7 +707,7 @@ def server(input, output, session):
         mask = counts > 0
         if not mask.any():
             fig, ax = plt.subplots(figsize=(2.6, 1.8))
-            ax.text(0.5, 0.5, "No data", ha="center", va="center",
+            ax.text(0.5, 0.5, no_data_label, ha="center", va="center",
                     transform=ax.transAxes, color="#888", fontsize=9)
             ax.set_axis_off()
             fig.patch.set_facecolor("white")
@@ -653,10 +726,10 @@ def server(input, output, session):
         ax.bar(bin_centers, counts, width=(edges[1] - edges[0]) * 0.9,
                color=bar_color, edgecolor="none", alpha=0.85)
         ax.axvline(mean_val, color="#333", linewidth=1.2, linestyle="--",
-                   label=f"mean {mean_val:.2f}")
+                   label=f"{mean_label} {mean_val:.2f}")
 
         ax.set_xlabel(info.get("unit", ""), fontsize=7, color="#333")
-        ax.set_ylabel("pixels", fontsize=7, color="#333")
+        ax.set_ylabel(pixels_label, fontsize=7, color="#333")
         ax.tick_params(labelsize=6, colors="#444")
         ax.spines[["top", "right"]].set_visible(False)
         ax.spines[["left", "bottom"]].set_color("#aaa")
@@ -750,6 +823,7 @@ def server(input, output, session):
         sui.update_select("country_zoom", selected="none")
         _marker_active.set(False)
         _last_click.set(None)
+        _layer_visible.set(True)
         await session.send_custom_message("marker_mode_change", False)
         await _hide_circle()
         await _hide_country_outline()

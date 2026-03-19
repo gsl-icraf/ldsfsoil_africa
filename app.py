@@ -3,11 +3,15 @@ from pathlib import Path
 from shiny import App, reactive, ui
 
 from modules import soil_mapping, about
+from utils import T
 
-# Maps URL hash ↔ nav panel title
+# Stable panel values used for hash routing (language-independent)
+_PANEL_SOIL    = "LDSF Soil Mapping"
+_PANEL_ABOUT   = "About the LDSF"
+
 HASH_TO_NAV = {
-    "#home":       "LDSF Soil Mapping",
-    "#about_ldsf": "About the LDSF",
+    "#home":       _PANEL_SOIL,
+    "#about_ldsf": _PANEL_ABOUT,
 }
 NAV_TO_HASH = {v: k for k, v in HASH_TO_NAV.items()}
 
@@ -34,56 +38,77 @@ $(document).on('shiny:connected', function() {
 """)
 
 
-app_ui = ui.page_navbar(
-    ui.nav_panel("LDSF Soil Mapping", soil_mapping.ui("soil_mapping")),
-    ui.nav_panel("About the LDSF", about.ui("about")),
-    ui.nav_spacer(),
-    ui.nav_control(
-        ui.tags.a(
-            ui.tags.img(
-                src="cifor-icraf-logo-white.svg",
-                alt="CIFOR-ICRAF",
-                style="height: 36px; width: auto; display: block;",
-            ),
-            href="https://www.cifor-icraf.org",
-            target="_blank",
-            style="display: flex; align-items: center; padding: 0 1rem;",
-        )
-    ),
-    id="nav",
-    title=ui.tags.span(ui.HTML("🌍&nbsp;"), "Africa Soil Maps"),
-    fillable="LDSF Soil Mapping",
-    header=ui.tags.link(rel="stylesheet", href="style.css"),
-    footer=ui.tags.div(
-        _routing_js,
-        ui.tags.footer(
-            ui.tags.div(
-                ui.tags.img(
-                    src="spacial-logo.png",
-                    alt="SPACIAL",
-                    style="height: 28px; width: auto; display: block;",
+def app_ui(req):
+    lang = req.query_params.get("lang", "en")
+    switch_lang = "fr" if lang == "en" else "en"
+
+    return ui.page_navbar(
+        ui.nav_panel(
+            T(lang, "nav", "soil_mapping"),
+            soil_mapping.ui("soil_mapping", lang=lang),
+            value=_PANEL_SOIL,
+        ),
+        ui.nav_panel(
+            T(lang, "nav", "about"),
+            about.ui("about", lang=lang),
+            value=_PANEL_ABOUT,
+        ),
+        ui.nav_spacer(),
+        ui.nav_control(
+            ui.tags.a(
+                T(lang, "nav", "lang_switch"),
+                href=f"?lang={switch_lang}",
+                style=(
+                    "color: #f0e8c0; font-size: 0.9rem; font-weight: 600;"
+                    " padding: 0.3rem 0.75rem; border: 1px solid rgba(240,232,192,0.4);"
+                    " border-radius: 0.35rem; text-decoration: none;"
+                    " display: flex; align-items: center;"
                 ),
-                ui.tags.span(
-                    ui.HTML(
-                        "Developed by CIFOR-ICRAF SPACIAL&nbsp;&nbsp;·&nbsp;&nbsp;"
-                        "&copy; CIFOR-ICRAF"
+            )
+        ),
+        ui.nav_control(
+            ui.tags.a(
+                ui.tags.img(
+                    src="cifor-icraf-logo-white.svg",
+                    alt="CIFOR-ICRAF",
+                    style="height: 36px; width: auto; display: block;",
+                ),
+                href="https://www.cifor-icraf.org",
+                target="_blank",
+                style="display: flex; align-items: center; padding: 0 1rem;",
+            )
+        ),
+        id="nav",
+        title=ui.tags.span(ui.HTML("🌍&nbsp;"), T(lang, "nav", "title")),
+        fillable=_PANEL_SOIL,
+        header=ui.tags.link(rel="stylesheet", href="style.css"),
+        footer=ui.tags.div(
+            _routing_js,
+            ui.tags.footer(
+                ui.tags.div(
+                    ui.tags.img(
+                        src="spacial-logo.png",
+                        alt="SPACIAL",
+                        style="height: 28px; width: auto; display: block;",
                     ),
-                    style="font-size: 0.78rem; color: #a0b8a0;",
+                    ui.tags.span(
+                        ui.HTML(T(lang, "footer", "credit")),
+                        style="font-size: 0.78rem; color: #a0b8a0;",
+                    ),
+                    style=(
+                        "display: flex; align-items: center; gap: 0.85rem;"
+                        " justify-content: center;"
+                    ),
                 ),
                 style=(
-                    "display: flex; align-items: center; gap: 0.85rem;"
-                    " justify-content: center;"
+                    "background: #0D1A0F; border-top: 1px solid rgba(255,255,255,0.08);"
+                    " padding: 0.5rem 1.5rem; text-align: center;"
                 ),
             ),
-            style=(
-                "background: #0D1A0F; border-top: 1px solid rgba(255,255,255,0.08);"
-                " padding: 0.5rem 1.5rem; text-align: center;"
-            ),
         ),
-    ),
-    bg="#0D1A0F",
-    inverse=True,
-)
+        bg="#0D1A0F",
+        inverse=True,
+    )
 
 
 def server(input, output, session):
