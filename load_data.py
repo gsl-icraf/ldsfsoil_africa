@@ -89,10 +89,10 @@ tn_tiles_url   = build_tile_url(tn_cog_url,   tn_bins,   tn_colors)
 cec_tiles_url  = build_tile_url(cec_cog_url,  cec_bins,  cec_colors)
 # ── Layer catalogue (consumed by soil_mapping.py) ───────────────────────────
 SOIL_LAYERS = {
-    "soc":  {"title": "Soil Organic Carbon",      "unit": "g/kg",     "tiles_url": soc_tiles_url,  "bins": soc_bins,  "colors": soc_colors,  "cap": True, "cap_low": True},
-    "ph":   {"title": "pH",                        "unit": "pH",       "tiles_url": ph_tiles_url,   "bins": ph_bins,   "colors": ph_colors,   "cap": True, "cap_low": True},
-    "clay": {"title": "Clay",                      "unit": "%",        "tiles_url": clay_tiles_url, "bins": clay_bins, "colors": clay_colors},
-    "sand": {"title": "Sand",                      "unit": "%",        "tiles_url": sand_tiles_url, "bins": sand_bins, "colors": sand_colors},
-    "tn":   {"title": "Total Nitrogen",            "unit": "g/kg",     "tiles_url": tn_tiles_url,   "bins": tn_bins,   "colors": tn_colors,   "cap": True, "cap_low": True},
-    "cec":  {"title": "CEC",                       "unit": "cmol/kg",  "tiles_url": cec_tiles_url,  "bins": cec_bins,  "colors": cec_colors},
+    "soc":  {"title": "Soil Organic Carbon",      "unit": "g/kg",     "tiles_url": soc_tiles_url,  "cog_url": soc_cog_url,  "bins": soc_bins,  "colors": soc_colors,  "cap": True, "cap_low": True},
+    "ph":   {"title": "pH",                        "unit": "pH",       "tiles_url": ph_tiles_url,   "cog_url": ph_cog_url,   "bins": ph_bins,   "colors": ph_colors,   "cap": True, "cap_low": True},
+    "clay": {"title": "Clay",                      "unit": "%",        "tiles_url": clay_tiles_url, "cog_url": clay_cog_url, "bins": clay_bins, "colors": clay_colors},
+    "sand": {"title": "Sand",                      "unit": "%",        "tiles_url": sand_tiles_url, "cog_url": sand_cog_url, "bins": sand_bins, "colors": sand_colors},
+    "tn":   {"title": "Total Nitrogen",            "unit": "g/kg",     "tiles_url": tn_tiles_url,   "cog_url": tn_cog_url,   "bins": tn_bins,   "colors": tn_colors,   "cap": True, "cap_low": True},
+    "cec":  {"title": "CEC",                       "unit": "cmol/kg",  "tiles_url": cec_tiles_url,  "cog_url": cec_cog_url,  "bins": cec_bins,  "colors": cec_colors},
 }

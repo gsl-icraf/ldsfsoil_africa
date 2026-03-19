@@ -4,47 +4,69 @@ from shiny import App, reactive, ui
 
 from modules import soil_mapping, about
 
-# Maps URL ?page= value ↔ nav panel title
-PAGE_TO_NAV = {
-    "soil_mapping": "LDSF Soil Mapping",
-    "about": "About this dashboard",
+# Maps URL hash ↔ nav panel title
+HASH_TO_NAV = {
+    "#home":       "LDSF Soil Mapping",
+    "#about_ldsf": "About the LDSF",
 }
-NAV_TO_PAGE = {v: k for k, v in PAGE_TO_NAV.items()}
+NAV_TO_HASH = {v: k for k, v in HASH_TO_NAV.items()}
 
-# JS: keep ?page= query param in sync when the user switches tabs
+# JS: sync window.location.hash with active tab (both directions)
 _routing_js = ui.tags.script("""
+const NAV_TO_HASH = """ + str(NAV_TO_HASH).replace("'", '"') + """;
+const HASH_TO_NAV = """ + str(HASH_TO_NAV).replace("'", '"') + """;
+
+// Tab → hash: update hash when user switches tabs
 $(document).on('shiny:inputchanged', function(e) {
     if (e.name === 'nav') {
-        const pageMap = """ + str(NAV_TO_PAGE).replace("'", '"') + """;
-        const page = pageMap[e.value] || e.value;
-        const url = new URL(window.location);
-        url.searchParams.set('page', page);
-        window.history.pushState({}, '', url);
+        const hash = NAV_TO_HASH[e.value];
+        if (hash) history.replaceState(null, '', hash);
     }
+});
+
+// Hash → tab: wait for session to be fully running before sending input
+$(document).on('shiny:connected', function() {
+    const tab = HASH_TO_NAV[window.location.hash];
+    if (tab) setTimeout(function() {
+        Shiny.setInputValue('nav_from_hash', tab, {priority: 'event'});
+    }, 300);
 });
 """)
 
 
 app_ui = ui.page_navbar(
     ui.nav_panel("LDSF Soil Mapping", soil_mapping.ui("soil_mapping")),
-    ui.nav_panel("About this dashboard", about.ui("about")),
+    ui.nav_panel("About the LDSF", about.ui("about")),
+    ui.nav_spacer(),
+    ui.nav_control(
+        ui.tags.a(
+            ui.tags.img(
+                src="cifor-icraf-logo-white.svg",
+                alt="CIFOR-ICRAF",
+                style="height: 36px; width: auto; display: block;",
+            ),
+            href="https://www.cifor-icraf.org",
+            target="_blank",
+            style="display: flex; align-items: center; padding: 0 1rem;",
+        )
+    ),
     id="nav",
     title=ui.tags.span(ui.HTML("🌍&nbsp;"), "Africa Soil Maps"),
     fillable="LDSF Soil Mapping",
     header=ui.tags.link(rel="stylesheet", href="style.css"),
     footer=ui.tags.div(_routing_js),
-    bg="#0D1A0F",   # deep dark green — Pan-African base
-    inverse=True,  # light text/links on the dark background
+    bg="#0D1A0F",
+    inverse=True,
 )
 
 
 def server(input, output, session):
-    # On session start: read ?page= from URL and jump to the correct panel
     @reactive.effect
-    async def _init_route():
-        page = session.http_conn.query_params.get("page")
-        if page and page in PAGE_TO_NAV:
-            ui.update_navs("nav", selected=PAGE_TO_NAV[page], session=session)
+    @reactive.event(input.nav_from_hash)
+    async def _hash_route():
+        tab = input.nav_from_hash()
+        if tab in NAV_TO_HASH:
+            ui.update_navs("nav", selected=tab, session=session)
 
     soil_mapping.server("soil_mapping")
     about.server("about")

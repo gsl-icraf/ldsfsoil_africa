@@ -1,3 +1,10 @@
+import math
+
+import httpx
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
 from shiny import module, render, reactive
 from shiny import ui as sui
 from maplibre import Map, MapOptions, MapContext, output_maplibregl, render_maplibregl
@@ -6,6 +13,9 @@ from load_data import SOIL_LAYERS
 # Africa center (lng, lat) and zoom
 AFRICA_CENTER = (20.0, 2.0)
 AFRICA_ZOOM   = 3
+
+TITILER_BASE = "https://titiler.thegrit.earth"
+SCALE_FACTOR = 100  # COGs store float * SCALE_FACTOR as int16
 
 # Convenience dict: key → pre-computed tile URL
 _SOIL_TILE_URLS = {key: info["tiles_url"] for key, info in SOIL_LAYERS.items()}
@@ -45,10 +55,71 @@ BASEMAP_TILES = {
     },
 }
 
+_EMPTY_FC = {"type": "FeatureCollection", "features": []}
+
+# African country bounding boxes: [[west, south], [east, north]]
+AFRICA_COUNTRIES = {
+    "Algeria":                  [[-8.67, 18.97],  [11.99, 37.09]],
+    "Angola":                   [[11.64, -18.02], [24.08, -4.44]],
+    "Benin":                    [[0.77,  6.14],   [3.85,  12.41]],
+    "Botswana":                 [[19.99, -26.91], [29.37, -17.78]],
+    "Burkina Faso":             [[-5.52, 9.40],   [2.40,  15.08]],
+    "Burundi":                  [[28.99, -4.47],  [30.85, -2.31]],
+    "Cameroon":                 [[8.50,  1.65],   [16.01, 13.08]],
+    "Central African Republic": [[14.42, 2.22],   [27.46, 11.00]],
+    "Chad":                     [[13.47, 7.44],   [24.00, 23.45]],
+    "Comoros":                  [[43.22, -12.42], [44.54, -11.36]],
+    "Congo (Brazzaville)":      [[11.21, -5.02],  [18.65,  3.71]],
+    "DR Congo":                 [[12.18, -13.46], [31.31,  5.39]],
+    "Djibouti":                 [[41.75, 10.93],  [43.42, 12.71]],
+    "Egypt":                    [[24.70, 22.00],  [36.90, 31.67]],
+    "Equatorial Guinea":        [[8.02,  0.86],   [11.34,  3.79]],
+    "Eritrea":                  [[36.43, 12.36],  [43.13, 18.00]],
+    "Eswatini":                 [[30.80, -27.32], [32.14, -25.72]],
+    "Ethiopia":                 [[32.99, 3.40],   [47.99, 14.89]],
+    "Gabon":                    [[8.70,  -3.98],  [14.52,  2.32]],
+    "Gambia":                   [[-16.82, 13.06], [-13.80, 13.83]],
+    "Ghana":                    [[-3.26, 4.74],   [1.20,  11.17]],
+    "Guinea":                   [[-15.13, 7.19],  [-7.65, 12.67]],
+    "Guinea-Bissau":            [[-16.71, 10.93], [-13.64, 12.68]],
+    "Ivory Coast":              [[-8.60, 4.36],   [-2.49, 10.74]],
+    "Kenya":                    [[33.90, -4.68],  [41.90,  5.03]],
+    "Lesotho":                  [[27.01, -30.65], [29.46, -28.57]],
+    "Liberia":                  [[-11.49, 4.36],  [-7.37,  8.55]],
+    "Libya":                    [[9.31,  19.50],  [25.16, 33.17]],
+    "Madagascar":               [[43.22, -25.60], [50.48, -11.95]],
+    "Malawi":                   [[32.67, -16.80], [35.92,  -9.37]],
+    "Mali":                     [[-4.24, 10.15],  [4.27,  25.00]],
+    "Mauritania":               [[-17.07, 14.62], [-4.83, 27.40]],
+    "Mauritius":                [[57.30, -20.52], [57.80, -19.98]],
+    "Morocco":                  [[-13.17, 27.67], [-1.01, 35.92]],
+    "Mozambique":               [[32.07, -26.87], [40.84, -10.47]],
+    "Namibia":                  [[11.73, -28.97], [25.26, -16.97]],
+    "Niger":                    [[0.17,  11.69],  [15.90, 23.52]],
+    "Nigeria":                  [[2.69,   4.24],  [14.68, 13.87]],
+    "Rwanda":                   [[28.86,  -2.84], [30.90,  -1.05]],
+    "São Tomé and Príncipe":    [[6.45,   0.02],  [7.46,   1.70]],
+    "Senegal":                  [[-17.54, 12.31], [-11.35, 16.69]],
+    "Sierra Leone":             [[-13.30, 6.93],  [-10.28, 10.00]],
+    "Somalia":                  [[40.99,  -1.68], [51.41, 12.02]],
+    "South Africa":             [[16.34, -34.82], [32.89, -22.13]],
+    "South Sudan":              [[23.89,   3.49], [35.95, 12.24]],
+    "Sudan":                    [[21.83,   8.68], [38.60, 22.23]],
+    "Tanzania":                 [[29.34, -11.75], [40.44,  -0.99]],
+    "Togo":                     [[0.14,   6.10],  [1.81,  11.14]],
+    "Tunisia":                  [[7.52,  30.24],  [11.58, 37.54]],
+    "Uganda":                   [[29.58,  -1.48], [35.04,  4.23]],
+    "Western Sahara":           [[-17.10, 20.77], [-8.67, 27.67]],
+    "Zambia":                   [[21.97, -18.08], [33.49,  -8.22]],
+    "Zimbabwe":                 [[25.24, -22.42], [33.07, -15.61]],
+}
+
+
 def build_map_style(active_basemap="topo", active_soil="none"):
-    """Build a complete MapLibre style with all basemaps + soil layers.
-    Basemap and soil visibility are toggled via set_layout_property — no setStyle needed."""
+    """Build a complete MapLibre style with all basemaps + soil layers + circle overlay."""
     sources, layers = {}, []
+
+    # Basemaps
     for key, info in BASEMAP_TILES.items():
         sources[f"basemap-{key}"] = {
             "type": "raster", "tiles": info["tiles"], "tileSize": 256,
@@ -59,6 +130,8 @@ def build_map_style(active_basemap="topo", active_soil="none"):
             "id": f"basemap-{key}", "type": "raster", "source": f"basemap-{key}",
             "layout": {"visibility": "visible" if key == active_basemap else "none"},
         })
+
+    # Soil raster layers
     for key, tile_url in _SOIL_TILE_URLS.items():
         sources[f"soil-{key}"] = {"type": "raster", "tiles": [tile_url], "tileSize": 256}
         layers.append({
@@ -66,14 +139,144 @@ def build_map_style(active_basemap="topo", active_soil="none"):
             "paint": {"raster-opacity": 0.8},
             "layout": {"visibility": "visible" if key == active_soil else "none"},
         })
+
+    # Country outline overlay — always present, initially empty
+    sources["country-source"] = {"type": "geojson", "data": _EMPTY_FC}
+    layers.append({
+        "id": "country-line",
+        "type": "line",
+        "source": "country-source",
+        "paint": {"line-color": "#000000", "line-width": 3},
+        "layout": {"visibility": "none"},
+    })
+
+    # Circle overlay (marker mode) — always present, initially empty
+    sources["circle-source"] = {"type": "geojson", "data": _EMPTY_FC}
+    layers.append({
+        "id": "circle-fill",
+        "type": "fill",
+        "source": "circle-source",
+        "paint": {"fill-color": "rgba(255,255,255,0.12)"},
+        "layout": {"visibility": "none"},
+    })
+    layers.append({
+        "id": "circle-line",
+        "type": "line",
+        "source": "circle-source",
+        "paint": {"line-color": "#FCD116", "line-width": 2, "line-dasharray": [4, 2]},
+        "layout": {"visibility": "none"},
+    })
+
     return {"version": 8, "sources": sources, "layers": layers}
+
+
+def _circle_polygon(lng, lat, radius_km=2.0, n=64):
+    """GeoJSON Polygon approximating a circle of radius_km around (lng, lat)."""
+    R = 6371.0
+    lat_r = math.radians(lat)
+    coords = []
+    for i in range(n + 1):
+        angle = 2 * math.pi * i / n
+        dlat = math.degrees(radius_km / R * math.cos(angle))
+        dlng = math.degrees(radius_km / R * math.sin(angle) / math.cos(lat_r))
+        coords.append([lng + dlng, lat + dlat])
+    return {"type": "Polygon", "coordinates": [coords]}
+
+
+async def _show_circle(lng, lat):
+    """Update the circle overlay on the map to a 2 km circle at (lng, lat)."""
+    polygon = _circle_polygon(lng, lat)
+    geojson = {"type": "FeatureCollection", "features": [
+        {"type": "Feature", "geometry": polygon, "properties": {}}
+    ]}
+    try:
+        async with MapContext("map") as mc:
+            mc.add_call("removeLayer", "circle-line")
+            mc.add_call("removeLayer", "circle-fill")
+            mc.add_call("removeSource", "circle-source")
+            mc.add_call("addSource", "circle-source", {"type": "geojson", "data": geojson})
+            mc.add_call("addLayer", {
+                "id": "circle-fill", "type": "fill", "source": "circle-source",
+                "paint": {"fill-color": "rgba(255,255,255,0.10)"},
+            })
+            mc.add_call("addLayer", {
+                "id": "circle-line", "type": "line", "source": "circle-source",
+                "paint": {"line-color": "#FCD116", "line-width": 2,
+                          "line-dasharray": [4, 2]},
+            })
+    except Exception as e:
+        print(f"[circle] {e}")
+
+
+async def _hide_circle():
+    """Remove circle data from the map overlay."""
+    try:
+        async with MapContext("map") as mc:
+            mc.add_call("removeLayer", "circle-line")
+            mc.add_call("removeLayer", "circle-fill")
+            mc.add_call("removeSource", "circle-source")
+            mc.add_call("addSource", "circle-source", {"type": "geojson", "data": _EMPTY_FC})
+            mc.add_call("addLayer", {
+                "id": "circle-fill", "type": "fill", "source": "circle-source",
+                "paint": {"fill-color": "rgba(255,255,255,0.0)"},
+                "layout": {"visibility": "none"},
+            })
+            mc.add_call("addLayer", {
+                "id": "circle-line", "type": "line", "source": "circle-source",
+                "paint": {"line-color": "#000000", "line-width": 3},
+                "layout": {"visibility": "none"},
+            })
+    except Exception as e:
+        print(f"[circle-hide] {e}")
+
+
+async def _hide_country_outline():
+    try:
+        async with MapContext("map") as mc:
+            mc.add_call("removeLayer", "country-line")
+            mc.add_call("removeSource", "country-source")
+            mc.add_call("addSource", "country-source", {"type": "geojson", "data": _EMPTY_FC})
+            mc.add_call("addLayer", {
+                "id": "country-line", "type": "line", "source": "country-source",
+                "paint": {"line-color": "#000000", "line-width": 3},
+                "layout": {"visibility": "none"},
+            })
+    except Exception as e:
+        print(f"[country-hide] {e}")
 
 
 # Pan-African palette
 _TITLE_CLASS   = "pan-african-title fw-bold mb-0"
-_CARD_TEXT     = "#d8e8d4"   # soft green-white — readable on dark glass bg
-_ACCENT        = "#FCD116"   # Pan-African gold
-_SIDEBAR_BG    = "rgba(0, 80, 30, 0.45)"   # glass green (also set via CSS)
+_CARD_TEXT     = "#d8e8d4"
+_ACCENT        = "#FCD116"
+_SIDEBAR_BG    = "rgba(0, 80, 30, 0.45)"
+
+_MARKER_JS = sui.tags.script("""
+Shiny.addCustomMessageHandler('marker_mode_change', function(active) {
+    var canvases = document.querySelectorAll('.maplibregl-canvas');
+    canvases.forEach(function(c) {
+        c.style.cursor = active ? 'crosshair' : '';
+    });
+    var btn = document.getElementById('marker_toggle_btn');
+    if (btn) {
+        btn.textContent = active ? '📍 Marker mode: ON' : '📍 Marker mode: OFF';
+        btn.style.borderColor = active ? 'rgba(252,209,22,0.7)' : 'rgba(196,137,90,0.45)';
+        btn.style.color = active ? '#FCD116' : '#e8d5b0';
+    }
+});
+""")
+
+_MARKER_BTN_STYLE = (
+    "background: rgba(196,137,90,0.18);"
+    " border: 1px solid rgba(196,137,90,0.45);"
+    " color: #e8d5b0;"
+    " border-radius: 0.4rem;"
+    " padding: 0.3rem 0.75rem;"
+    " font-size: 0.85rem;"
+    " cursor: pointer;"
+    " width: 100%;"
+    " margin-top: 0.5rem;"
+)
 
 
 @module.ui
@@ -87,7 +290,10 @@ def ui():
                 choices={"none": "None"} | {k: v["title"] for k, v in SOIL_LAYERS.items()},
                 selected="none",
             ),
+            sui.output_ui("marker_btn_ui"),
             sui.output_ui("legend"),
+            sui.output_ui("density_section"),
+            _MARKER_JS,
             width=280,
             open="desktop",
             fillable=True,
@@ -95,17 +301,33 @@ def ui():
         sui.div(
             sui.card(
                 sui.card_body(
-                    sui.h2(
-                        sui.HTML("Welcome to the LDSF Africa<br>Soil Mapping Dashboard!"),
-                        class_=_TITLE_CLASS,
+                    sui.div(
+                        sui.h2(
+                            sui.HTML("Welcome to the LDSF Africa<br>Soil Mapping Dashboard!"),
+                            class_=_TITLE_CLASS,
+                        ),
+                        sui.div(
+                            sui.span(
+                                "Select country:",
+                                style="color: #f0e8c0; font-size: 0.8rem; margin-bottom: 0.2rem; display: block;",
+                            ),
+                            sui.input_select(
+                                "country_zoom",
+                                None,
+                                choices={"none": "— Select —"} | {k: k for k in sorted(AFRICA_COUNTRIES)},
+                                selected="none",
+                                width="200px",
+                            ),
+                            style="display: flex; flex-direction: column; align-items: flex-start;",
+                        ),
+                        style="display: flex; align-items: center; justify-content: space-between; width: 100%;",
                     ),
-                    class_="d-flex align-items-center justify-content-center",
+                    class_="d-flex align-items-center",
                 ),
                 class_="glass-card",
                 style="border: none !important; box-shadow: none !important; background: transparent !important;",
             ),
             sui.div(
-                # Map fills remaining horizontal space
                 sui.card(
                     output_maplibregl("map", height="100%"),
                     sui.card_footer(
@@ -142,28 +364,19 @@ def ui():
                     full_screen=True,
                     style="flex: 1 1 0; min-height: 0; padding: 0; overflow: hidden; background: rgba(55, 32, 12, 0.50) !important;",
                 ),
-                # Instructions card docked to the right
                 sui.card(
                     sui.card_header(
                         sui.tags.div(
-                            sui.tags.span(
-                                sui.tags.b("About this dashboard"),
-                                id="right_panel_title",
-                            ),
+                            sui.tags.span(sui.tags.b("About this dashboard"), id="right_panel_title"),
                             sui.tags.button(
                                 sui.HTML("&#8250;"),
                                 id="right_panel_btn",
                                 onclick="toggleRightPanel(this)",
                                 title="Collapse panel",
                                 style=(
-                                    "background: transparent;"
-                                    " border: none;"
-                                    " color: #f0e8c0;"
-                                    " font-size: 1.4rem;"
-                                    " line-height: 1;"
-                                    " cursor: pointer;"
-                                    " padding: 0;"
-                                    " flex-shrink: 0;"
+                                    "background: transparent; border: none; color: #f0e8c0;"
+                                    " font-size: 1.4rem; line-height: 1; cursor: pointer;"
+                                    " padding: 0; flex-shrink: 0;"
                                 ),
                             ),
                             style="display: flex; justify-content: space-between; align-items: center; width: 100%;",
@@ -186,26 +399,11 @@ def ui():
                             style=f"color: {_CARD_TEXT}; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.5rem;",
                         ),
                         sui.tags.ul(
-                            sui.tags.li(
-                                sui.tags.b("Pan: "),
-                                "Click and drag to move the map.",
-                            ),
-                            sui.tags.li(
-                                sui.tags.b("Zoom: "),
-                                "Scroll wheel, pinch, or use the +/− buttons.",
-                            ),
-                            sui.tags.li(
-                                sui.tags.b("Basemap: "),
-                                "Switch between Dark, Streets and Satellite using the controls on the left.",
-                            ),
-                            sui.tags.li(
-                                sui.tags.b("Layers: "),
-                                "Soil property layers will appear here as they are added to the dashboard.",
-                            ),
-                            sui.tags.li(
-                                sui.tags.b("Click features: "),
-                                "Click on mapped areas to see soil property values and site metadata.",
-                            ),
+                            sui.tags.li(sui.tags.b("Pan: "), "Click and drag to move the map."),
+                            sui.tags.li(sui.tags.b("Zoom: "), "Scroll wheel, pinch, or use the +/− buttons."),
+                            sui.tags.li(sui.tags.b("Basemap: "), "Switch between Dark, Streets and Satellite using the controls on the left."),
+                            sui.tags.li(sui.tags.b("Layers: "), "Soil property layers will appear here as they are added to the dashboard."),
+                            sui.tags.li(sui.tags.b("Click on map: "), "Click on the map to see the distribution of values for the selected soil property within a 2 km² area around the click."),
                             class_="ps-3",
                             style="font-size: 1rem; line-height: 1.7;",
                         ),
@@ -237,6 +435,57 @@ function toggleRightPanel(btn) {
 @module.server
 def server(input, output, session):
 
+    _marker_active = reactive.value(False)
+    _last_click    = reactive.value(None)
+
+    # ── Marker mode button (hidden when no property selected) ─────────────────
+    @render.ui
+    def marker_btn_ui():
+        if input.property() == "none":
+            return sui.div()
+        return sui.tags.button(
+            "📍 Marker mode: OFF",
+            id="marker_toggle_btn",
+            onclick="Shiny.setInputValue('soil_mapping-marker_toggle', Math.random());",
+            style=_MARKER_BTN_STYLE,
+        )
+
+    # ── Clear click + circle when property changes ────────────────────────────
+    @reactive.effect
+    @reactive.event(input.property)
+    async def _on_property_change():
+        if _last_click.get() is not None:
+            _last_click.set(None)
+            await _hide_circle()
+        if input.property() == "none" and _marker_active.get():
+            _marker_active.set(False)
+            await session.send_custom_message("marker_mode_change", False)
+
+    # ── Marker mode toggle ────────────────────────────────────────────────────
+    @reactive.effect
+    @reactive.event(input.marker_toggle)
+    async def _toggle_marker():
+        new_state = not _marker_active.get()
+        _marker_active.set(new_state)
+        if not new_state:
+            _last_click.set(None)
+            await _hide_circle()
+        await session.send_custom_message("marker_mode_change", new_state)
+
+    # ── Handle map click ──────────────────────────────────────────────────────
+    @reactive.effect
+    @reactive.event(input["map_clicked"])
+    async def _handle_click():
+        if not _marker_active.get():
+            return
+        clicked = input["map_clicked"]()
+        if not clicked or "coords" not in clicked:
+            return
+        _last_click.set(clicked)
+        coords = clicked["coords"]
+        await _show_circle(coords["lng"], coords["lat"])
+
+    # ── Legend ────────────────────────────────────────────────────────────────
     @render.ui
     def legend():
         prop = input.property()
@@ -249,12 +498,10 @@ def server(input, output, session):
         cap_low = info.get("cap_low", False)
         unit = info.get("unit", "")
 
-        # Gradient bar: top = high value, bottom = low value
         stops = ", ".join(reversed(colors))
         gradient = f"linear-gradient(to bottom, {stops})"
         bar_h = 220
 
-        # Label positions for each bin value
         n = len(bins)
         label_divs = []
         for i, val in enumerate(reversed(bins)):
@@ -277,11 +524,10 @@ def server(input, output, session):
 
         return sui.div(
             sui.div(
-                # Unit label — rotated vertically, left of the bar
                 sui.div(
                     unit,
                     style=(
-                        f"writing-mode: vertical-rl; transform: rotate(180deg);"
+                        "writing-mode: vertical-rl; transform: rotate(180deg);"
                         " font-size: 0.85rem; color: #1a1a1a; white-space: nowrap;"
                         f" height: {bar_h}px; display: flex; align-items: center;"
                         " justify-content: center; padding-right: 12px; flex-shrink: 0;"
@@ -307,6 +553,119 @@ def server(input, output, session):
             ),
         )
 
+    # ── Density section ───────────────────────────────────────────────────────
+    @render.ui
+    def density_section():
+        if not _marker_active.get():
+            return sui.div()
+        click = _last_click.get()
+        if click is None:
+            return sui.div(
+                sui.p(
+                    "Click on the map to sample values within a 2 km radius.",
+                    style="color: #d8e8d4; font-size: 0.8rem; margin-top: 0.75rem; font-style: italic;",
+                )
+            )
+        prop = input.property()
+        if prop == "none":
+            return sui.div(
+                sui.p(
+                    "Select a soil property to see the distribution.",
+                    style="color: #d8e8d4; font-size: 0.8rem; margin-top: 0.75rem; font-style: italic;",
+                )
+            )
+        coords = click["coords"]
+        return sui.div(
+            sui.hr(style="border-color: rgba(196,137,90,0.2); margin: 0.75rem 0 0.5rem 0;"),
+            sui.p(
+                f"📍 {coords['lat']:.4f}°, {coords['lng']:.4f}°  |  2 km radius",
+                style="color: #d8e8d4; font-size: 0.78rem; margin: 0 0 0.4rem 0;",
+            ),
+            sui.output_plot("density_plot", height="180px"),
+        )
+
+    # ── Density plot ──────────────────────────────────────────────────────────
+    @render.plot
+    async def density_plot():
+        click = _last_click.get()
+        prop  = input.property()
+        if click is None or prop == "none":
+            fig = plt.figure(figsize=(2.6, 1.8))
+            fig.patch.set_alpha(0)
+            return fig
+
+        info    = SOIL_LAYERS[prop]
+        cog_url = info["cog_url"]
+        coords  = click["coords"]
+        lng, lat = coords["lng"], coords["lat"]
+
+        polygon = _circle_polygon(lng, lat, radius_km=2.0)
+        geojson = {
+            "type": "FeatureCollection",
+            "features": [{"type": "Feature", "geometry": polygon, "properties": {}}],
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.post(
+                    f"{TITILER_BASE}/cog/statistics",
+                    params={"url": cog_url, "nodata": -9999},
+                    json=geojson,
+                )
+            if resp.status_code != 200:
+                raise ValueError(f"TiTiler {resp.status_code}: {resp.text[:200]}")
+            data = resp.json()
+            feat  = data["features"][0]
+            props = feat["properties"]
+            # Support both 'statistics' wrapper and flat layout
+            b1 = props.get("statistics", props).get("b1") or props.get("b1")
+            counts = np.array(b1["histogram"][0], dtype=float)
+            edges  = np.array(b1["histogram"][1], dtype=float) / SCALE_FACTOR
+        except Exception as e:
+            print(f"[density_plot] {e}")
+            fig, ax = plt.subplots(figsize=(2.6, 1.8))
+            ax.text(0.5, 0.5, "No data", ha="center", va="center",
+                    transform=ax.transAxes, color="#888", fontsize=9)
+            ax.set_axis_off()
+            fig.patch.set_facecolor("white")
+            fig.patch.set_alpha(0.92)
+            return fig
+
+        mask = counts > 0
+        if not mask.any():
+            fig, ax = plt.subplots(figsize=(2.6, 1.8))
+            ax.text(0.5, 0.5, "No data", ha="center", va="center",
+                    transform=ax.transAxes, color="#888", fontsize=9)
+            ax.set_axis_off()
+            fig.patch.set_facecolor("white")
+            fig.patch.set_alpha(0.92)
+            return fig
+
+        bin_centers = (edges[:-1] + edges[1:]) / 2
+        mean_val    = np.average(bin_centers[mask], weights=counts[mask])
+        bar_color   = info["colors"][len(info["colors"]) // 2]
+
+        fig, ax = plt.subplots(figsize=(2.6, 1.8))
+        fig.patch.set_facecolor("white")
+        fig.patch.set_alpha(0.92)
+        ax.set_facecolor("#f8f8f4")
+
+        ax.bar(bin_centers, counts, width=(edges[1] - edges[0]) * 0.9,
+               color=bar_color, edgecolor="none", alpha=0.85)
+        ax.axvline(mean_val, color="#333", linewidth=1.2, linestyle="--",
+                   label=f"mean {mean_val:.2f}")
+
+        ax.set_xlabel(info.get("unit", ""), fontsize=7, color="#333")
+        ax.set_ylabel("pixels", fontsize=7, color="#333")
+        ax.tick_params(labelsize=6, colors="#444")
+        ax.spines[["top", "right"]].set_visible(False)
+        ax.spines[["left", "bottom"]].set_color("#aaa")
+        ax.legend(fontsize=6, frameon=False, labelcolor="#333")
+
+        fig.tight_layout(pad=0.4)
+        return fig
+
+    # ── Map ───────────────────────────────────────────────────────────────────
     @render_maplibregl
     def map():
         return Map(MapOptions(
@@ -340,10 +699,60 @@ def server(input, output, session):
             print(f"[property] {e}")
 
     @reactive.effect
+    @reactive.event(input.country_zoom)
+    async def _zoom_to_country():
+        country = input.country_zoom()
+        if country == "none":
+            await _hide_country_outline()
+            return
+        bounds = AFRICA_COUNTRIES.get(country)
+        if bounds is None:
+            return
+
+        # Fetch simplified country polygon from Nominatim
+        country_geojson = _EMPTY_FC
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.get(
+                    "https://nominatim.openstreetmap.org/search",
+                    params={"q": country, "format": "geojson",
+                            "polygon_geojson": 1, "limit": 1,
+                            "addressdetails": 0},
+                    headers={"User-Agent": "AfricaSoilMaps/1.0"},
+                )
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("features"):
+                    country_geojson = data
+        except Exception as e:
+            print(f"[country boundary] {e}")
+
+        try:
+            async with MapContext("map") as mc:
+                mc.add_call("removeLayer", "country-line")
+                mc.add_call("removeSource", "country-source")
+                mc.add_call("addSource", "country-source",
+                            {"type": "geojson", "data": country_geojson})
+                mc.add_call("addLayer", {
+                    "id": "country-line", "type": "line",
+                    "source": "country-source",
+                    "paint": {"line-color": "#000000", "line-width": 3},
+                })
+                mc.add_call("fitBounds", bounds, {"padding": 30, "duration": 800})
+        except Exception as e:
+            print(f"[country_zoom] {e}")
+
+    @reactive.effect
     @reactive.event(input.reset_view)
     async def _reset_view():
         sui.update_radio_buttons("basemap", selected="topo")
         sui.update_select("property", selected="none")
+        sui.update_select("country_zoom", selected="none")
+        _marker_active.set(False)
+        _last_click.set(None)
+        await session.send_custom_message("marker_mode_change", False)
+        await _hide_circle()
+        await _hide_country_outline()
         try:
             async with MapContext("map") as mc:
                 mc.add_call("flyTo", {"center": list(AFRICA_CENTER), "zoom": AFRICA_ZOOM})
