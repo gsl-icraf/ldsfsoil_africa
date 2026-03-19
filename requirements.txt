@@ -1,2 +1,4 @@
 shiny>=1.1.0
 maplibre>=0.3.6
+numpy
+shiny
