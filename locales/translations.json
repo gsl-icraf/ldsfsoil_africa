@@ -40,6 +40,9 @@
       "how_layers": "Soil property layers will appear here as they are added to the dashboard.",
       "how_click_b": "Click on map: ",
       "how_click": "Click on the map to see the distribution of values for the selected soil property within a 2 km\u00b2 area around the click.",
+      "depth_note": "Predictions are for the upper 0–20 cm of the soil profile.",
+      "depth_more": "Click here to learn about the data and methods",
+      "property_hint": "Use the dropdown above to select a soil property. This will be displayed on the map. To zoom into a particular country, select this from the dropdown in the top-right corner of the screen.",
       "click_hint": "Click on the map to sample values within a 2 km radius.",
       "select_hint": "Select a soil property to see the distribution.",
       "radius_label": "2 km radius",
@@ -89,7 +92,16 @@
       "info_title": "Further Information",
       "info_ldsf": " \u2014 field manual, publications, and global site map.",
       "info_contact": "Contact: ",
-      "indicator_title": "LDSF Indicator Framework"
+      "indicator_title": "LDSF Indicator Framework",
+      "data_title": "The Data Behind the Maps",
+      "data_p1": "The soil maps on this dashboard are built on a rich foundation of real-world measurements. More than 49,000 soil samples have been collected from over 300 LDSF sites across 41 countries — spanning a wide range of African landscapes, from tropical rainforests to semi-arid drylands.",
+      "data_p2": "Every sample was analysed in the laboratory for key soil properties, producing one of the largest field-based soil datasets on the continent. These measurements are what the predictive models learn from: by linking lab results with satellite imagery and terrain data, the models can extend local knowledge across the entire continent and fill in the gaps between sampling sites.",
+      "data_stat_samples": "49,000+ soil samples",
+      "data_stat_samples_desc": "soil samples analysed",
+      "data_stat_sites": "300+ LDSF sites",
+      "data_stat_sites_desc": "LDSF field sites",
+      "data_stat_countries": "41 countries",
+      "data_stat_countries_desc": "countries covered"
     }
   },
   "fr": {
@@ -133,6 +145,9 @@
       "how_layers": "Les couches de propri\u00e9t\u00e9s du sol appara\u00eetront ici au fur et \u00e0 mesure qu\u2019elles sont ajout\u00e9es au tableau de bord.",
       "how_click_b": "Clic sur la carte\u00a0: ",
       "how_click": "Cliquez sur la carte pour voir la distribution des valeurs de la propri\u00e9t\u00e9 du sol s\u00e9lectionn\u00e9e dans une zone de 2\u00a0km\u00b2 autour du clic.",
+      "depth_note": "Les prédictions concernent les 0–20 cm supérieurs du profil de sol.",
+      "depth_more": "Cliquez ici pour en savoir plus sur les données et les méthodes",
+      "property_hint": "Utilisez le menu d\u00e9roulant ci-dessus pour s\u00e9lectionner une propri\u00e9t\u00e9 du sol. Elle sera affich\u00e9e sur la carte. Pour zoomer sur un pays particulier, s\u00e9lectionnez-le dans le menu d\u00e9roulant en haut \u00e0 droite de l\u2019\u00e9cran.",
       "click_hint": "Cliquez sur la carte pour \u00e9chantillonner les valeurs dans un rayon de 2\u00a0km.",
       "select_hint": "S\u00e9lectionnez une propri\u00e9t\u00e9 du sol pour voir la distribution.",
       "radius_label": "rayon de 2\u00a0km",
@@ -182,7 +197,16 @@
       "info_title": "Pour Plus d\u2019Informations",
       "info_ldsf": " \u2014 manuel de terrain, publications et carte mondiale des sites.",
       "info_contact": "Contact\u00a0: ",
-      "indicator_title": "Cadre des Indicateurs LDSF"
+      "indicator_title": "Cadre des Indicateurs LDSF",
+      "data_title": "Les Données Derrière les Cartes",
+      "data_p1": "Les cartes de sol de ce tableau de bord reposent sur une base solide de mesures réelles. Plus de 49\u00a0000 échantillons de sol ont été collectés dans plus de 300 sites LDSF répartis dans 41 pays — couvrant une grande variété de paysages africains, des forêts tropicales humides aux zones semi-arides.",
+      "data_p2": "Chaque échantillon a été analysé en laboratoire pour les principales propriétés du sol, constituant l'un des plus grands ensembles de données de sol basées sur le terrain du continent. Ces mesures sont ce dont les modèles prédictifs apprennent\u00a0: en reliant les résultats de laboratoire aux images satellitaires et aux données de terrain, les modèles peuvent étendre la connaissance locale à l'ensemble du continent et combler les lacunes entre les sites d'échantillonnage.",
+      "data_stat_samples": "49\u00a0000+ échantillons de sol",
+      "data_stat_samples_desc": "échantillons de sol analysés",
+      "data_stat_sites": "300+ sites LDSF",
+      "data_stat_sites_desc": "sites de terrain LDSF",
+      "data_stat_countries": "41 pays",
+      "data_stat_countries_desc": "pays couverts"
     }
   }
 }

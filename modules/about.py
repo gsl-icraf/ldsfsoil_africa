@@ -35,6 +35,49 @@ def ui(lang="en"):
             style=_P + " margin-bottom: 1.25rem;",
         ),
 
+        # ── Data foundation banner (full-width) ───────────────────────────────
+        sui.div(
+            sui.div(
+                sui.h3(t("data_title"), style=_H3),
+                sui.p(t("data_p1"), " ", t("data_p2"), style=_P + " margin-bottom: 0;"),
+                # Stats row
+                sui.div(
+                    *[
+                        sui.div(
+                            sui.tags.span(
+                                label,
+                                style=(
+                                    "display: block; font-size: 1.45rem; font-weight: 700;"
+                                    " color: #FCD116; line-height: 1.2; margin-bottom: 0.2rem;"
+                                ),
+                            ),
+                            sui.tags.span(
+                                desc,
+                                style="font-size: 0.8rem; color: #d8e8d4; text-transform: uppercase; letter-spacing: 0.05em;",
+                            ),
+                            style=(
+                                "text-align: center; flex: 1 1 0;"
+                                " border-right: 1px solid rgba(196,137,90,0.2);"
+                                " padding: 0 1rem;"
+                            ),
+                        )
+                        for label, desc in [
+                            (t("data_stat_samples"), t("data_stat_samples_desc")),
+                            (t("data_stat_sites"),   t("data_stat_sites_desc")),
+                            (t("data_stat_countries"), t("data_stat_countries_desc")),
+                        ]
+                    ],
+                    style=(
+                        "display: flex; flex-direction: row; margin-top: 1.25rem;"
+                        " padding-top: 1.25rem; border-top: 1px solid rgba(196,137,90,0.2);"
+                        " gap: 0;"
+                    ),
+                ),
+                style=_CARD_STYLE + " width: 100%; box-sizing: border-box;",
+            ),
+            style="margin-bottom: 1.25rem;",
+        ),
+
         # ── Two-card row ──────────────────────────────────────────────────────
         sui.div(
 

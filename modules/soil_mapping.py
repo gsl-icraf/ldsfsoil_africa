@@ -311,11 +311,13 @@ function toggleRightPanel(btn) {{
                 choices={"none": t("none")} | {k: v["title"] for k, v in SOIL_LAYERS.items()},
                 selected="none",
             ),
+            sui.output_ui("property_hint"),
             sui.output_ui("marker_btn_ui"),
             sui.output_ui("legend"),
+            sui.output_ui("depth_note_ui"),
             sui.output_ui("density_section"),
             _make_marker_js(lang),
-            width=280,
+            width=323,
             open="desktop",
             fillable=True,
         ),
@@ -464,6 +466,50 @@ def server(input, output, session):
         except Exception:
             return "en"
 
+    # ── Property hint (shown only when no property selected) ──────────────────
+    @render.ui
+    def property_hint():
+        if input.property() != "none":
+            return sui.div()
+        lang = _lang()
+        return sui.p(
+            T(lang, "soil_mapping", "property_hint"),
+            style="color: #d8e8d4; font-size: 0.95rem; margin-top: 0.5rem; font-style: italic; line-height: 1.5;",
+        )
+
+    # ── Depth note (shown when a property is selected) ────────────────────────
+    @render.ui
+    def depth_note_ui():
+        if input.property() == "none":
+            return sui.div()
+        lang = _lang()
+        return sui.div(
+            sui.span(
+                T(lang, "soil_mapping", "depth_note"),
+                style="color: #d8e8d4; font-size: 0.85rem;",
+            ),
+            sui.tags.button(
+                T(lang, "soil_mapping", "depth_more"),
+                onclick="history.pushState(null,'','#about_ldsf'); Shiny.setInputValue('nav_from_hash', 'About the LDSF', {priority: 'event'});",
+                style=(
+                    "background: rgba(196,137,90,0.18);"
+                    " border: 1px solid rgba(196,137,90,0.45);"
+                    " color: #FCD116;"
+                    " border-radius: 0.4rem;"
+                    " padding: 0.2rem 0.75rem;"
+                    " font-size: 0.85rem;"
+                    " cursor: pointer;"
+                    " width: 100%;"
+                ),
+            ),
+            style=(
+                "background: rgba(0,50,20,0.45);"
+                " border: 1px solid rgba(196,137,90,0.2); border-radius: 0.5rem;"
+                " padding: 0.6rem 0.75rem;"
+                " display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;"
+            ),
+        )
+
     # ── Marker mode button (hidden when no property selected) ─────────────────
     @render.ui
     def marker_btn_ui():
@@ -526,6 +572,16 @@ def server(input, output, session):
         if input.property() == "none" and _marker_active.get():
             _marker_active.set(False)
             await session.send_custom_message("marker_mode_change", False)
+        # Switch basemap to dark when a property is selected, topo when cleared
+        if input.property() != "none":
+            sui.update_radio_buttons("basemap", selected="dark")
+            try:
+                async with MapContext("map") as mc:
+                    for key in BASEMAP_TILES:
+                        mc.set_layout_property(f"basemap-{key}", "visibility",
+                                               "visible" if key == "dark" else "none")
+            except Exception as e:
+                print(f"[auto-basemap] {e}")
 
     # ── Marker mode toggle ────────────────────────────────────────────────────
     @reactive.effect
