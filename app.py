@@ -38,6 +38,19 @@ $(document).on('shiny:connected', function() {
 """)
 
 
+_GA_ID = "G-3BQ7C2CVK1"
+
+_ga_head = ui.head_content(
+    ui.tags.script(src=f"https://www.googletagmanager.com/gtag/js?id={_GA_ID}", async_=True),
+    ui.tags.script(f"""
+window.dataLayer = window.dataLayer || [];
+function gtag(){{dataLayer.push(arguments);}}
+gtag('js', new Date());
+gtag('config', '{_GA_ID}');
+"""),
+)
+
+
 def app_ui(req):
     lang = req.query_params.get("lang", "en")
     switch_lang = "fr" if lang == "en" else "en"
@@ -81,7 +94,10 @@ def app_ui(req):
         id="nav",
         title=ui.tags.span(ui.HTML("🌍&nbsp;"), T(lang, "nav", "title")),
         fillable=_PANEL_SOIL,
-        header=ui.tags.link(rel="stylesheet", href="style.css"),
+        header=ui.TagList(
+            _ga_head,
+            ui.tags.link(rel="stylesheet", href="style.css"),
+        ),
         footer=ui.tags.div(
             _routing_js,
             ui.tags.footer(
