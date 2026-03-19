@@ -561,17 +561,20 @@ def server(input, output, session):
         except Exception as e:
             print(f"[layer_toggle] {e}")
 
-    # ── Clear click + circle when property changes ────────────────────────────
+    # ── Handle property change ─────────────────────────────────────────────────
     @reactive.effect
     @reactive.event(input.property)
     async def _on_property_change():
         _layer_visible.set(True)
-        if _last_click.get() is not None:
-            _last_click.set(None)
-            await _hide_circle()
-        if input.property() == "none" and _marker_active.get():
-            _marker_active.set(False)
-            await session.send_custom_message("marker_mode_change", False)
+        if input.property() == "none":
+            # Clearing the property: remove circle and turn off marker mode
+            if _last_click.get() is not None:
+                _last_click.set(None)
+                await _hide_circle()
+            if _marker_active.get():
+                _marker_active.set(False)
+                await session.send_custom_message("marker_mode_change", False)
+        # If switching between properties, keep the circle — histogram rerenders automatically
         # Switch basemap to dark when a property is selected, topo when cleared
         if input.property() != "none":
             sui.update_radio_buttons("basemap", selected="dark")
@@ -760,7 +763,8 @@ def server(input, output, session):
             fig.patch.set_alpha(0.92)
             return fig
 
-        mask = counts > 0
+        bin_centers = (edges[:-1] + edges[1:]) / 2
+        mask = (counts > 0) & (edges[:-1] > 0)
         if not mask.any():
             fig, ax = plt.subplots(figsize=(2.6, 1.8))
             ax.text(0.5, 0.5, no_data_label, ha="center", va="center",
@@ -770,8 +774,7 @@ def server(input, output, session):
             fig.patch.set_alpha(0.92)
             return fig
 
-        bin_centers = (edges[:-1] + edges[1:]) / 2
-        mean_val    = np.average(bin_centers[mask], weights=counts[mask])
+        mean_val = np.average(bin_centers[mask], weights=counts[mask])
         bar_color   = info["colors"][len(info["colors"]) // 2]
 
         fig, ax = plt.subplots(figsize=(2.6, 1.8))
