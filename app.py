@@ -54,7 +54,33 @@ app_ui = ui.page_navbar(
     title=ui.tags.span(ui.HTML("🌍&nbsp;"), "Africa Soil Maps"),
     fillable="LDSF Soil Mapping",
     header=ui.tags.link(rel="stylesheet", href="style.css"),
-    footer=ui.tags.div(_routing_js),
+    footer=ui.tags.div(
+        _routing_js,
+        ui.tags.footer(
+            ui.tags.div(
+                ui.tags.img(
+                    src="spacial-logo.png",
+                    alt="SPACIAL",
+                    style="height: 28px; width: auto; display: block;",
+                ),
+                ui.tags.span(
+                    ui.HTML(
+                        "Developed by CIFOR-ICRAF SPACIAL&nbsp;&nbsp;·&nbsp;&nbsp;"
+                        "&copy; CIFOR-ICRAF"
+                    ),
+                    style="font-size: 0.78rem; color: #a0b8a0;",
+                ),
+                style=(
+                    "display: flex; align-items: center; gap: 0.85rem;"
+                    " justify-content: center;"
+                ),
+            ),
+            style=(
+                "background: #0D1A0F; border-top: 1px solid rgba(255,255,255,0.08);"
+                " padding: 0.5rem 1.5rem; text-align: center;"
+            ),
+        ),
+    ),
     bg="#0D1A0F",
     inverse=True,
 )
