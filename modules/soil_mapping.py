@@ -304,7 +304,7 @@ function toggleRightPanel(btn) {{
 
     return sui.layout_sidebar(
         sui.sidebar(
-            sui.h6(t("sidebar_title"), style="color: #f0e8c0; letter-spacing: 0.05em;"),
+            sui.output_ui("sidebar_heading_ui"),
             sui.output_ui("property_hint"),
             sui.output_ui("marker_btn_ui"),
             sui.output_ui("legend"),
@@ -329,7 +329,7 @@ function toggleRightPanel(btn) {{
                                     t("sidebar_title"),
                                     style=(
                                         "color: #f0e8c0; font-size: 0.8rem;"
-                                        " margin-bottom: 0.2rem; display: block;"
+                                        " margin-bottom: 0.2rem; display: block; font-size: 1rem;"
                                     ),
                                 ),
                                 sui.input_select(
@@ -352,7 +352,7 @@ function toggleRightPanel(btn) {{
                                     t("select_country"),
                                     style=(
                                         "color: #f0e8c0; font-size: 0.8rem;"
-                                        " margin-bottom: 0.2rem; display: block;"
+                                        " margin-bottom: 0.2rem; display: block; font-size: 1rem;"
                                     ),
                                 ),
                                 sui.input_select(
@@ -502,6 +502,18 @@ def server(input, output, session):
         except Exception:
             return "en"
 
+    # ── Sidebar heading ───────────────────────────────────────────────────────
+    @render.ui
+    def sidebar_heading_ui():
+        lang = _lang()
+        prop = input.property()
+        style = "color: #f0e8c0; letter-spacing: 0.05em; font-size: 1.15rem;"
+        if prop == "none":
+            return sui.h6(T(lang, "soil_mapping", "sidebar_heading"), style=style)
+        title = SOIL_LAYERS[prop]["title"]
+        text = T(lang, "soil_mapping", "sidebar_displaying").format(title=title)
+        return sui.h6(text, style=style)
+
     # ── Property hint (shown only when no property selected) ──────────────────
     @render.ui
     def property_hint():
@@ -510,7 +522,7 @@ def server(input, output, session):
         lang = _lang()
         return sui.p(
             T(lang, "soil_mapping", "property_hint"),
-            style="color: #d8e8d4; font-size: 0.95rem; margin-top: 0.5rem; font-style: italic; line-height: 1.5;",
+            style="color: #d8e8d4; font-size: 1.05rem; margin-top: 0.5rem; font-style: italic; line-height: 1.6;",
         )
 
     # ── Depth note (shown when a property is selected) ────────────────────────

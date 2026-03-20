@@ -10,6 +10,8 @@
       "credit": "Developed by CIFOR-ICRAF SPACIAL\u00a0\u00a0\u00b7\u00a0\u00a0\u00a9 CIFOR-ICRAF"
     },
     "soil_mapping": {
+      "sidebar_heading": "Getting started...",
+      "sidebar_displaying": "Displaying map of {title} at 250m resolution",
       "sidebar_title": "Soil Property",
       "none": "None",
       "select": "— Select —",
@@ -42,7 +44,7 @@
       "how_click": "Click on the map to see the distribution of values for the selected soil property within a 2 km\u00b2 area around the click.",
       "depth_note": "Predictions are for the upper 0–20 cm of the soil profile.",
       "depth_more": "Click here to learn about the data and methods",
-      "property_hint": "Use the dropdown above to select a soil property. This will be displayed on the map. To zoom into a particular country, select this from the dropdown in the top-right corner of the screen.",
+      "property_hint": "Use the Soil Property dropdown to the right of the title to choose a layer to display on the map. To zoom into a country, use the Country dropdown next to it.",
       "click_hint": "Click on the map to sample values within a 2 km radius.",
       "select_hint": "Select a soil property to see the distribution.",
       "radius_label": "2 km radius",
@@ -115,6 +117,8 @@
       "credit": "D\u00e9velopp\u00e9 par CIFOR-ICRAF SPACIAL\u00a0\u00a0\u00b7\u00a0\u00a0\u00a9 CIFOR-ICRAF"
     },
     "soil_mapping": {
+      "sidebar_heading": "Pour commencer\u00a0...",
+      "sidebar_displaying": "Carte de {title} \u00e0 250\u00a0m de r\u00e9solution",
       "sidebar_title": "Propri\u00e9t\u00e9 du Sol",
       "none": "Aucune",
       "select": "\u2014 S\u00e9lectionner \u2014",
@@ -147,7 +151,7 @@
       "how_click": "Cliquez sur la carte pour voir la distribution des valeurs de la propri\u00e9t\u00e9 du sol s\u00e9lectionn\u00e9e dans une zone de 2\u00a0km\u00b2 autour du clic.",
       "depth_note": "Les prédictions concernent les 0–20 cm supérieurs du profil de sol.",
       "depth_more": "Cliquez ici pour en savoir plus sur les données et les méthodes",
-      "property_hint": "Utilisez le menu d\u00e9roulant ci-dessus pour s\u00e9lectionner une propri\u00e9t\u00e9 du sol. Elle sera affich\u00e9e sur la carte. Pour zoomer sur un pays particulier, s\u00e9lectionnez-le dans le menu d\u00e9roulant en haut \u00e0 droite de l\u2019\u00e9cran.",
+      "property_hint": "Utilisez le menu d\u00e9roulant Propri\u00e9t\u00e9 du sol \u00e0 droite du titre pour choisir une couche \u00e0 afficher sur la carte. Pour zoomer sur un pays, utilisez le menu d\u00e9roulant Pays \u00e0 c\u00f4t\u00e9.",
       "click_hint": "Cliquez sur la carte pour \u00e9chantillonner les valeurs dans un rayon de 2\u00a0km.",
       "select_hint": "S\u00e9lectionnez une propri\u00e9t\u00e9 du sol pour voir la distribution.",
       "radius_label": "rayon de 2\u00a0km",
