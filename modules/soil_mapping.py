@@ -387,6 +387,13 @@ function toggleRightPanel(btn) {{
                 style="border: none !important; box-shadow: none !important; background: transparent !important;",
             ),
             sui.div(
+                t("map_year_header"),
+                style=(
+                    "text-align: center; color: #a8c4a8; font-size: 0.9rem;"
+                    " font-style: italic; margin-bottom: 0.25rem;"
+                ),
+            ),
+            sui.div(
                 sui.card(
                     output_maplibregl("map", height="100%"),
                     sui.card_footer(
