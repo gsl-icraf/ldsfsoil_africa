@@ -305,12 +305,6 @@ function toggleRightPanel(btn) {{
     return sui.layout_sidebar(
         sui.sidebar(
             sui.h6(t("sidebar_title"), style="color: #f0e8c0; letter-spacing: 0.05em;"),
-            sui.input_select(
-                "property",
-                None,
-                choices={"none": t("none")} | {k: v["title"] for k, v in SOIL_LAYERS.items()},
-                selected="none",
-            ),
             sui.output_ui("property_hint"),
             sui.output_ui("marker_btn_ui"),
             sui.output_ui("legend"),
@@ -330,20 +324,62 @@ function toggleRightPanel(btn) {{
                             class_=_TITLE_CLASS,
                         ),
                         sui.div(
-                            sui.span(
-                                t("select_country"),
-                                style="color: #f0e8c0; font-size: 0.8rem; margin-bottom: 0.2rem; display: block;",
+                            sui.div(
+                                sui.span(
+                                    t("sidebar_title"),
+                                    style=(
+                                        "color: #f0e8c0; font-size: 0.8rem;"
+                                        " margin-bottom: 0.2rem; display: block;"
+                                    ),
+                                ),
+                                sui.input_select(
+                                    "property",
+                                    None,
+                                    choices=(
+                                        {"none": t("none")}
+                                        | {k: v["title"] for k, v in SOIL_LAYERS.items()}
+                                    ),
+                                    selected="none",
+                                    width="200px",
+                                ),
+                                style=(
+                                    "display: flex; flex-direction: column;"
+                                    " align-items: flex-start;"
+                                ),
                             ),
-                            sui.input_select(
-                                "country_zoom",
-                                None,
-                                choices={"none": t("select")} | {k: k for k in sorted(AFRICA_COUNTRIES)},
-                                selected="none",
-                                width="200px",
+                            sui.div(
+                                sui.span(
+                                    t("select_country"),
+                                    style=(
+                                        "color: #f0e8c0; font-size: 0.8rem;"
+                                        " margin-bottom: 0.2rem; display: block;"
+                                    ),
+                                ),
+                                sui.input_select(
+                                    "country_zoom",
+                                    None,
+                                    choices=(
+                                        {"none": t("select")}
+                                        | {k: k for k in sorted(AFRICA_COUNTRIES)}
+                                    ),
+                                    selected="none",
+                                    width="200px",
+                                ),
+                                style=(
+                                    "display: flex; flex-direction: column;"
+                                    " align-items: flex-start;"
+                                ),
                             ),
-                            style="display: flex; flex-direction: column; align-items: flex-start;",
+                            style=(
+                                "display: flex; gap: 1rem;"
+                                " align-items: flex-end; flex-wrap: wrap;"
+                            ),
                         ),
-                        style="display: flex; align-items: center; justify-content: space-between; width: 100%;",
+                        style=(
+                            "display: flex; align-items: center;"
+                            " justify-content: space-between;"
+                            " width: 100%; flex-wrap: wrap; gap: 0.5rem;"
+                        ),
                     ),
                     class_="d-flex align-items-center",
                 ),

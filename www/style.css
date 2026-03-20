@@ -171,3 +171,97 @@ body {
 .about-content hr {
     border-color: rgba(196, 137, 90, 0.25);
 }
+
+/* ── Mobile layout (≤ 767px) ────────────────────────────────────────────── */
+@media (max-width: 767px) {
+
+    /* Hide right info panel — map takes full width */
+    #right_info_card {
+        display: none !important;
+    }
+
+    /* Compact the title bar */
+    .pan-african-title {
+        font-size: 1.15rem !important;
+        letter-spacing: 0.06em !important;
+    }
+
+    /* Fix height chain — bslib fill breaks on mobile */
+    .bslib-sidebar-layout {
+        min-height: calc(100dvh - 110px) !important;
+    }
+
+    .bslib-sidebar-layout > .main {
+        height: 100% !important;
+        min-height: calc(100dvh - 110px) !important;
+        overflow: hidden !important;
+    }
+
+    /* Map card must have explicit height since flex chain may not resolve */
+    .map-card {
+        min-height: calc(100dvh - 270px) !important;
+        flex: 1 1 auto !important;
+    }
+
+    /* MapLibre canvas wrapper */
+    .maplibregl-map,
+    .mapboxgl-map {
+        min-height: calc(100dvh - 270px) !important;
+    }
+
+    /* Stack basemap controls vertically so they don't overflow */
+    .map-card .card-footer > div {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.4rem !important;
+    }
+
+    /* ── Sidebar open button — large, obvious FAB ── */
+    .bslib-sidebar-toggle {
+        background: #c4895a !important;
+        color: #0d0804 !important;
+        border-radius: 12px !important;
+        width: 52px !important;
+        min-width: 52px !important;
+        height: 52px !important;
+        font-size: 1.6rem !important;
+        font-weight: 900 !important;
+        box-shadow:
+            0 4px 20px rgba(0, 0, 0, 0.70),
+            0 0 0 2px rgba(240, 232, 192, 0.35) !important;
+        margin-top: 0.6rem !important;
+        border: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .bslib-sidebar-toggle:hover,
+    .bslib-sidebar-toggle:focus {
+        background: #d4a070 !important;
+        box-shadow:
+            0 6px 24px rgba(0, 0, 0, 0.80),
+            0 0 0 3px rgba(240, 232, 192, 0.55) !important;
+    }
+
+    /* Inject a "Layers" label below the toggle icon */
+    .bslib-sidebar-toggle::after {
+        content: "Layers";
+        display: block;
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        line-height: 1;
+        margin-top: 2px;
+        color: #0d0804;
+    }
+
+    /* Make the toggle taller to fit the label */
+    .bslib-sidebar-toggle {
+        height: 62px !important;
+        flex-direction: column !important;
+        padding: 0.4rem 0.3rem !important;
+        gap: 2px !important;
+    }
+}
