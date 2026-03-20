@@ -512,7 +512,16 @@ def server(input, output, session):
             return sui.h6(T(lang, "soil_mapping", "sidebar_heading"), style=style)
         title = SOIL_LAYERS[prop]["title"]
         text = T(lang, "soil_mapping", "sidebar_displaying").format(title=title)
-        return sui.h6(text, style=style)
+        return sui.div(
+            sui.h6(text, style=style),
+            sui.p(
+                T(lang, "soil_mapping", "sidebar_depth_note"),
+                style=(
+                    "color: #a8c4a8; font-size: 1rem;"
+                    " font-style: italic; margin: 0.1rem 0 0.5rem 0;"
+                ),
+            ),
+        )
 
     # ── Property hint (shown only when no property selected) ──────────────────
     @render.ui

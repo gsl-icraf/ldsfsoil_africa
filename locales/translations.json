@@ -12,6 +12,7 @@
     "soil_mapping": {
       "sidebar_heading": "Getting started...",
       "sidebar_displaying": "Displaying map of {title} at 250m resolution",
+      "sidebar_depth_note": "Maps are predictions of soil properties at 0–20 cm soil depth.",
       "sidebar_title": "Soil Property",
       "none": "None",
       "select": "— Select —",
@@ -119,6 +120,7 @@
     "soil_mapping": {
       "sidebar_heading": "Pour commencer\u00a0...",
       "sidebar_displaying": "Carte de {title} \u00e0 250\u00a0m de r\u00e9solution",
+      "sidebar_depth_note": "Les cartes sont des pr\u00e9dictions des propri\u00e9t\u00e9s du sol \u00e0 0\u201320\u00a0cm de profondeur.",
       "sidebar_title": "Propri\u00e9t\u00e9 du Sol",
       "none": "Aucune",
       "select": "\u2014 S\u00e9lectionner \u2014",
