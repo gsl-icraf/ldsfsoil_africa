@@ -381,17 +381,10 @@ function toggleRightPanel(btn) {{
                             " width: 100%; flex-wrap: wrap; gap: 0.5rem;"
                         ),
                     ),
-                    class_="d-flex align-items-center",
+                    class_="d-flex align-items-center flex-wrap",
                 ),
                 class_="glass-card",
                 style="border: none !important; box-shadow: none !important; background: transparent !important;",
-            ),
-            sui.div(
-                t("map_year_header"),
-                style=(
-                    "text-align: center; color: #a8c4a8; font-size: 0.9rem;"
-                    " font-style: italic; margin-bottom: 0.25rem;"
-                ),
             ),
             sui.div(
                 sui.card(
@@ -462,7 +455,7 @@ function toggleRightPanel(btn) {{
                             t("right_panel_desc"),
                             style=f"color: {_CARD_TEXT}; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem;",
                         ),
-                        sui.hr(style="border-color: rgba(196,137,90,0.25); margin: 0 0 1rem 0;"),
+                        sui.hr(style="border-color: rgba(196,137,90,0.12); margin: 0 0 1rem 0;"),
                         sui.h6(
                             t("how_to_title"),
                             style=f"color: {_CARD_TEXT}; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.5rem;",
@@ -476,6 +469,18 @@ function toggleRightPanel(btn) {{
                             class_="ps-3",
                             style="font-size: 1rem; line-height: 1.7;",
                         ),
+                        sui.hr(style=(
+                            "border-color: rgba(196,137,90,0.12);"
+                            " margin: 1rem 0 0.75rem 0;"
+                        )),
+                        sui.p(
+                            t("map_year_note"),
+                            style="color: #a8c4a8; font-size: 1.2rem; font-style: italic; margin: 0;",
+                        ),
+                        sui.hr(style=(
+                            "border-color: rgba(196,137,90,0.12);"
+                            " margin: 0.75rem 0 0 0;"
+                        )),
                         style=f"color: {_CARD_TEXT}; overflow-y: auto;",
                         id="right_panel_body",
                     ),

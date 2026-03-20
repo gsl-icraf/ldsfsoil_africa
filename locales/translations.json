@@ -12,6 +12,7 @@
     "soil_mapping": {
       "sidebar_heading": "Getting started...",
       "map_year_header": "Soil property predictions for Africa · 2024 · 0–20 cm depth · 250 m resolution",
+      "map_year_note": "The soil property maps are for 2024.",
       "sidebar_displaying": "Displaying map of {title} at 250m resolution",
       "sidebar_depth_note": "Maps are predictions of soil properties at 0–20 cm soil depth (2024).",
       "sidebar_title": "Soil Property",
@@ -121,6 +122,7 @@
     "soil_mapping": {
       "sidebar_heading": "Pour commencer\u00a0...",
       "map_year_header": "Pr\u00e9dictions des propri\u00e9t\u00e9s du sol pour l\u2019Afrique \u00b7 2024 \u00b7 profondeur 0\u201320\u00a0cm \u00b7 r\u00e9solution 250\u00a0m",
+      "map_year_note": "Les cartes des propri\u00e9t\u00e9s du sol sont pour 2024.",
       "sidebar_displaying": "Carte de {title} \u00e0 250\u00a0m de r\u00e9solution",
       "sidebar_depth_note": "Les cartes sont des pr\u00e9dictions des propri\u00e9t\u00e9s du sol \u00e0 0\u201320\u00a0cm de profondeur (2024).",
       "sidebar_title": "Propri\u00e9t\u00e9 du Sol",
