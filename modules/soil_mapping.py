@@ -16,8 +16,9 @@ from utils import T
 AFRICA_CENTER = (20.0, 2.0)
 AFRICA_ZOOM   = 3
 
-TITILER_BASE = "https://titiler.thegrit.earth"
-SCALE_FACTOR = 100  # COGs store float * SCALE_FACTOR as int16
+TITILER_BASE   = "https://titiler.thegrit.earth"
+SCALE_FACTOR   = 100  # COGs store float * SCALE_FACTOR as int16
+LEGEND_BAR_H   = 220  # px height of the legend colour bar
 
 # Convenience dict: key → pre-computed tile URL
 _SOIL_TILE_URLS = {key: info["tiles_url"] for key, info in SOIL_LAYERS.items()}
@@ -498,6 +499,19 @@ function toggleRightPanel(btn) {{
     )
 
 
+def _legend_ticks(bins, custom_ticks):
+    """Return list of (value, pct_from_top) for legend tick marks.
+
+    If custom_ticks is provided, each tick is positioned proportionally within
+    [bins[0], bins[-1]].  Otherwise 5 evenly-spaced ticks are used.
+    """
+    v_min, v_max = bins[0], bins[-1]
+    vals = sorted(custom_ticks, reverse=True) if custom_ticks else list(
+        np.linspace(v_max, v_min, 5)
+    )
+    return [(v, (v_max - v) / (v_max - v_min) * 100) for v in vals]
+
+
 @module.server
 def server(input, output, session):
 
@@ -692,20 +706,17 @@ def server(input, output, session):
         cap_low = info.get("cap_low", False)
         unit = info.get("unit", "")
 
-        stops = ", ".join(reversed(colors))
-        gradient = f"linear-gradient(to bottom, {stops})"
-        bar_h = 220
-
-        n = len(bins)
+        gradient   = f"linear-gradient(to bottom, {', '.join(reversed(colors))})"
+        tick_items = _legend_ticks(bins, info.get("ticks"))
         label_divs = []
-        for i, val in enumerate(reversed(bins)):
-            pct = i / (n - 1) * 100
+        for i, (val, pct) in enumerate(tick_items):
+            rounded = format(round(val, 1), 'g')
             if cap and i == 0:
-                label = f"\u2265{val}"
-            elif cap_low and i == n - 1:
-                label = f"\u2264{val}"
+                label = f"\u2265{rounded}"
+            elif cap_low and i == len(tick_items) - 1:
+                label = f"\u2264{rounded}"
             else:
-                label = str(val)
+                label = rounded
             label_divs.append(
                 sui.div(
                     label,
@@ -723,20 +734,20 @@ def server(input, output, session):
                     style=(
                         "writing-mode: vertical-rl; transform: rotate(180deg);"
                         " font-size: 0.85rem; color: #1a1a1a; white-space: nowrap;"
-                        f" height: {bar_h}px; display: flex; align-items: center;"
+                        f" height: {LEGEND_BAR_H}px; display: flex; align-items: center;"
                         " justify-content: center; padding-right: 12px; flex-shrink: 0;"
                     ),
                 ),
                 sui.div(
                     style=(
-                        f"background: {gradient}; width: 28px; height: {bar_h}px;"
+                        f"background: {gradient}; width: 28px; height: {LEGEND_BAR_H}px;"
                         " border-radius: 4px; border: 1px solid rgba(0,0,0,0.15);"
                         " flex-shrink: 0;"
                     ),
                 ),
                 sui.div(
                     *label_divs,
-                    style=f"position: relative; height: {bar_h}px; padding-left: 8px;",
+                    style=f"position: relative; height: {LEGEND_BAR_H}px; padding-left: 8px;",
                 ),
                 style="display: flex; flex-direction: row; align-items: flex-start;",
             ),
